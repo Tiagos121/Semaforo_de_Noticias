@@ -31,9 +31,13 @@ export default function TesteBias() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            inputs: texto,
-            parameters: { candidate_labels: ["esquerda", "centro", "direita"] },
-          }),
+          inputs: texto, // A notícia a ser analisada
+          parameters: { 
+              candidate_labels: ["esquerda", "centro", "direita"], 
+              // NOVO PARÂMETRO: Torna explícita a intenção de classificar o viés
+              hypothesis_template: "Este texto tem um viés político de {}." 
+          },
+      }),
         }
       );
 

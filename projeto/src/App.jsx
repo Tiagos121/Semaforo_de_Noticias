@@ -2,6 +2,8 @@ import "./App.css";
 import TesteNoticias from "./components/TesteNoticias";
 import TesteMeteo from "./components/TesteMeteo";
 import TesteBias from "./components/TesteBias";
+import FeedNoticias from "./components/FeedNoticias";
+import PoliticaNoticias from "./components/NoticiasPotica";
 
 function App() {
   return (
@@ -12,13 +14,13 @@ function App() {
       </header>
 
       <main>
-        <TesteNoticias />
         <TesteMeteo />
         <TesteBias />
+        <PoliticaNoticias />
       </main>
 
       <footer>
-        <p>Desenvolvido com ❤️ por [teu nome]</p>
+        <p>Desenvolvido com ❤️ por [Tiago]</p>
       </footer>
     </div>
   );
