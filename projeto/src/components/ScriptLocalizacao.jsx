@@ -40,7 +40,7 @@ export function useLocationData() {
             }
             navigator.geolocation.getCurrentPosition(
                 (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-                (err) => reject(new Error("Permissão de localização negada.")),
+                (err) => reject(new Error(err.message || "Permissão de localização negada.")),
                 { timeout: 10000, enableHighAccuracy: true }
             );
         });
