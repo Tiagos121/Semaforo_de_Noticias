@@ -1,7 +1,6 @@
 import "./App.css";
 import TesteNoticias from "./components/TesteNoticias";
 import TesteMeteo from "./components/TesteMeteo";
-import TesteBias from "./components/TesteBias";
 import FeedNoticias from "./components/FeedNoticias";
 import PoliticaNoticias from "./components/NoticiasPotica";
 
@@ -15,8 +14,6 @@ function App() {
 
       <main>
         <TesteMeteo />
-        <TesteBias />
-        <PoliticaNoticias />
       </main>
 
       <footer>
