@@ -219,3 +219,4 @@ export function useWeatherForecast(lat, lon) {
 
     return { forecast, loading, error };
 }
+

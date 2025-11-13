@@ -1,8 +1,6 @@
 import "./App.css";
-import TesteNoticias from "./components/TesteNoticias";
-import TesteMeteo from "./components/TesteMeteo";
-import FeedNoticias from "./components/FeedNoticias";
 import PoliticaNoticias from "./components/NoticiasPotica";
+import DisplayLocalizacao from "./components/tempo_local/DisplayLocalizacao";
 
 function App() {
   return (
@@ -13,7 +11,7 @@ function App() {
       </header>
 
       <main>
-        <TesteMeteo />
+        <DisplayLocalizacao />
       </main>
 
       <footer>
