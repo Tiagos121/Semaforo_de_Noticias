@@ -1,244 +1,216 @@
 /* ============================================== */
-/* Variáveis de Cor (do seu objeto COLORS)       */
+/*                VARIÁVEIS DE COR                */
 /* ============================================== */
+
 :root {
-  --color-background: #1f2937;
-  --color-card-bg: #374151;
-  --color-text-light: #f3f4f6;
-  --color-text-muted: #9ca3af;
-  --color-indigo: #818cf8;
-  --color-error: #f87171;
-  --color-border: #475569;
+  --bg-dark: #1f2937;          /* fundo geral */
+  --bg-card: #374151;          /* cartão cinza */
+  --bg-subtle: #2b3442;        /* previsões */
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  --indigo: #818cf8;
+  --border: #4b5563;
+  --error: #f87171;
 }
 
-/* Remove margens e garante que o dimensionamento é consistente */
+/* RESET */
 * {
-  box-sizing: border-box;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
-/* Fonte base para o widget */
+
+
 .weather-widget-font {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
 
 /* ============================================== */
-/* Ecrãs de Loading e Erro                       */
-/* ============================================== */
-.weather-widget-loading-screen {
-  background-color: var(--color-background);
-  min-height: 100vh;
-  padding: 2rem;
-}
-
-.weather-widget-loading-text {
-  text-align: center;
-  margin-top: 5rem;
-  color: var(--color-text-light);
-}
-
-.weather-widget-error-screen {
-  background-color: var(--color-background);
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem;
-}
-
-.weather-widget-error-card {
-  background-color: var(--color-card-bg);
-  color: var(--color-text-light);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-  border-radius: 1rem;
-  padding: 2rem;
-  max-width: 400px;
-  text-align: center;
-}
-
-.weather-widget-error-title {
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: var(--color-error);
-  margin-bottom: 1rem;
-}
-
-.weather-widget-error-hint {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  margin-top: 1rem;
-}
-
-/* ============================================== */
-/* Layout Principal do Widget                    */
+/*                 LAYOUT PRINCIPAL               */
 /* ============================================== */
 
-/* CORREÇÃO DE LAYOUT: 
-   Mudei de 'flex-row' para 'flex-column' para empilhar o 
-   título e o cartão, o que me parece ser a sua intenção. 
-*/
 .weather-widget-container {
-  background-color: var(--color-background);
-  min-height: 100vh;
-  padding: 2rem;
+  width: 10000px;                       /* fundo ocupa toda a largura */
+  background-color: var(--bg-dark);
+  padding: 3rem 0;                   /* controla altura visual */
   display: flex;
-  flex-direction: column; /* <-- Corrigido de 'row' para 'column' */
-  align-items: center;    /* <-- Adicionado para centrar os blocos */
+  flex-direction: column;
+  align-items: center;               /* centra o cartão */
 }
 
-/* O título "Previsão de Tempo" e a localização */
+/* Header */
 .weather-widget-header {
-  margin-bottom: 2rem;
-  width: 95%;
-  max-width: 900px;
+  width: 100%;
+  max-width: 1000px;
+  color: var(--text-main);
   text-align: left;
-  color: var(--color-text-light);
+  margin-bottom: 2rem;
 }
 
 .weather-widget-title {
-  font-size: 2.25rem;
+  font-size: 2.5rem;
   font-weight: 300;
   margin-bottom: 0.5rem;
-  display: flex;
-  align-items: center;
 }
 
 .weather-widget-location {
-  font-size: 1.125rem;
-  color: var(--color-indigo);
-  margin-bottom: 2rem;
+  font-size: 1.2rem;
+  color: var(--indigo);
   display: flex;
   align-items: center;
-  text-align: left;
 }
 
 .weather-widget-location-icon {
-  width: 1.5rem; /* 24px - Aumentado */
-  height: 1.5rem; /* Aumentado */
-  margin-right: 0.5rem;
-  color: var(--color-text-light); /* <-- Cor alterada para branco */
+  font-size: 1.5rem;
+  margin-right: 0.4rem;
 }
 
-/* O cartão principal que contém tudo */
+
+
+/* ============================================== */
+/*                CARTÃO PRINCIPAL                */
+/* ============================================== */
+
 .weather-widget-card {
-  width: 95%;
-  max-width: 900px;
-  text-align: center;
-  background-color: var(--color-card-bg);
-  padding: 2rem;
+  width: 90%;
+  max-width: 2000px;
+  background-color: var(--bg-card);
+  padding: 2.5rem;
   border-radius: 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-light);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0,0,0,.3);
 }
 
+
+
 /* ============================================== */
-/* Meteorologia Atual (Dentro do Cartão)         */
+/*          METEOROLOGIA ATUAL (ESQUERDA)         */
 /* ============================================== */
+
 .weather-widget-current {
   display: flex;
   flex-direction: row;
-  justify-content: center;
   align-items: center;
+  gap: 2rem;
   margin-bottom: 2.5rem;
 }
 
 .weather-widget-current-main {
   display: flex;
   align-items: center;
-  margin-right: 2rem;
 }
 
+/* Ícone PRINCIPAL – o que estavas a querer aumentar */
 .weather-widget-current-icon {
-  width: 6rem; /* 96px - Aumentado */
-  height: 6rem; /* Aumentado */
-  filter: invert(100%);
-  color: var(--color-text-light);
+  font-size: 140px;     /* 👈 AGORA FICA GRANDE DE VERDADE */
+  color: var(--text-main);
+  margin-right: 1rem;
 }
+
+/* Aumentar mais?
+   font-size: 180px;
+*/
 
 .weather-widget-current-temp {
-  font-size: 3rem;
+  font-size: 4rem;
   font-weight: bold;
-  color: var(--color-text-light);
-  line-height: 1;
-  margin-left: 1rem;
 }
 
 .weather-widget-current-details {
+  color: var(--text-muted);
   text-align: left;
-  color: var(--color-text-muted);
 }
 
 .weather-widget-current-desc {
-  font-size: 1.125rem;
+  font-size: 1.3rem;
   text-transform: capitalize;
 }
 
 .weather-widget-current-date {
-  font-size: 0.875rem;
+  font-size: 1rem;
 }
 
-.weather-widget-no-data {
-  color: var(--color-text-muted);
-  margin-bottom: 1rem;
-}
+
 
 /* ============================================== */
-/* Previsão Semanal (Dentro do Cartão)           */
+/*             PREVISÃO SEMANAL (CARDS)           */
 /* ============================================== */
+
 .weather-widget-forecast-wrapper {
-  margin-top: 2rem;
+  margin-top: 1rem;
 }
 
 .weather-widget-forecast-grid {
   display: grid;
-  /* Cria colunas responsivas: no mínimo 100px, mas preenche o espaço */
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 1rem;
 }
 
 .weather-widget-forecast-day {
+  background: var(--bg-subtle);
   padding: 1rem;
-  background-color: var(--color-background); /* Contraste */
-  color: var(--color-text-light);
-  border-radius: 0.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  transition: transform 0.2s;
-  border: 1px solid var(--color-border);
+  border-radius: 0.6rem;
+  text-align: center;
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  transition: transform .2s;
 }
 
-/* Efeito hover simples */
 .weather-widget-forecast-day:hover {
   transform: translateY(-4px);
 }
 
 .weather-widget-forecast-day-name {
-  font-size: 0.875rem;
-  font-weight: 500; /* Medium */
-  margin-bottom: 0.5rem;
-  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 0.3rem;
 }
 
 .weather-widget-forecast-day-icon {
-  width: 3rem; /* 48px - Aumentado */
-  height: 3rem; /* Aumentado */
-  filter: invert(100%);
-  color: var(--color-text-light);
-  margin-bottom: 0.25rem;
+  font-size: 50px;       /* Ícones das semanas maiores */
+  color: var(--text-main);
+  margin: 0.5rem 0;
 }
 
 .weather-widget-forecast-day-temps {
-  font-size: 0.875rem;
-  font-weight: 600; /* Semibold */
-  color: var(--color-text-light);
-  margin-top: 0.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
 }
 
-.weather-widget-no-forecast {
-  color: var(--color-text-muted);
-  margin-top: 2rem;
+
+
+/* ============================================== */
+/*               LOADING / ERRO                   */
+/* ============================================== */
+
+.weather-widget-loading-screen,
+.weather-widget-error-screen {
+  width: 100%;
+  min-height: 100vh;
+  background: var(--bg-dark);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--text-main);
+}
+
+.weather-widget-error-card {
+  background: var(--bg-card);
+  padding: 2rem;
+  border-radius: 1rem;
+  text-align: center;
+  border: 1px solid var(--border);
+}
+
+.weather-widget-error-title {
+  color: var(--error);
+  font-size: 1.4rem;
+  margin-bottom: 1rem;
+}
+
+.weather-widget-error-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
 }
