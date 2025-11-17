@@ -1,0 +1,6 @@
+0 - Esticar a tela da meteriologia
+1 - Ver a estilo para os cards das noticias com a possibilidade de guadar 
+2 - Criar novo para noticias locais e os Guardados
+3 - Criar a aba vídeos de youtube e podcasts (pesquisar para saber como fazer)
+3 - Tentar criar barra de pesquisa e tags
+4 - tentar criar a navbar com root e criar ligação de perfil 

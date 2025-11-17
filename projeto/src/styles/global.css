@@ -1,0 +1,96 @@
+/* GLOBAL RESET */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #f5f6fa;
+  font-family: "Inter", sans-serif;
+}
+
+/* NAVBAR */
+.navbar {
+  background: white;
+  padding: 14px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.navbar-left a,
+.navbar-right a {
+  text-decoration: none;
+  color: #333;
+  font-weight: 600;
+  margin-right: 20px;
+}
+
+.navbar-left a:hover {
+  color: #4f46e5;
+}
+
+.login-btn {
+  background: #4f46e5;
+  padding: 8px 14px;
+  color: white;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.login-btn:hover {
+  background: #4338ca;
+}
+
+/* PROFILE IMAGE */
+.perfil-img {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* PAGE WRAPPER */
+.page-container {
+  padding: 30px;
+}
+
+/* PAGE TITLE */
+.page-title {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+/* GRID */
+.news-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+/* Placeholder */
+.placeholder {
+  color: #555;
+  font-size: 16px;
+  margin-top: 20px;
+}
+
+/* ... (todo o código anterior) ... */
+
+/* GRID */
+.news-grid {
+  display: grid;
+  /* Alterado para 2 ou 3 colunas, ajustando automaticamente */
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+  gap: 20px;
+}
+
+/* ... (o resto do código) ... */

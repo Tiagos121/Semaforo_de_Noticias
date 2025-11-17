@@ -1,0 +1,60 @@
+/* CARD CONTAINER */
+.news-card {
+  background: #ffffff;
+  padding: 18px;
+  border-radius: 14px;
+  border: 1px solid #dedede;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+  margin-bottom: 18px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.news-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 14px rgba(0,0,0,0.12);
+}
+
+/* TITLE */
+.news-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 8px;
+}
+
+/* DESCRIPTION */
+.news-desc {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+
+/* LINK */
+.news-link {
+  color: #4f46e5;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-block;
+  margin-bottom: 12px;
+}
+
+.news-link:hover {
+  text-decoration: underline;
+}
+
+/* SAVE BUTTON */
+.save-btn {
+  background: #facc15;
+  color: #111;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.save-btn:hover {
+  background: #eab308;
+}

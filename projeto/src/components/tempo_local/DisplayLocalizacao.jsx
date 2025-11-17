@@ -63,7 +63,7 @@ export default function DisplayLocalizacao() {
       
       {/* Título Principal */}
       <div className="weather-widget-header">
-        <h1 className="weather-widget-title">Previsão de Tempo</h1>
+        <h1 className="weather-widget-title">Localização</h1>
         <p className="weather-widget-location">
           <MapPinIcon className="weather-widget-location-icon" />
           {currentCity}
