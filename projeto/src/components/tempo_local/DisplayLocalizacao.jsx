@@ -4,10 +4,10 @@ import {
   useWeatherForecast,
   timestampToDate,
   getIconUrl,
-} from "./hooks/useWeatherAndLocation";
+} from "../../hooks/useWeatherAndLocation";
 
 // Importar o nosso novo ficheiro CSS
-import "./DisplayLocalizacao.css";
+import "./DisplayLocalizacaoStyles.css";
 
 // Componente de Ícone (Font Awesome)
 // (CloudIcon não era usado, por isso removi-o)

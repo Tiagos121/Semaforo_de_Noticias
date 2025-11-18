@@ -83,7 +83,6 @@ body {
   margin-top: 20px;
 }
 
-/* ... (todo o código anterior) ... */
 
 /* GRID */
 .news-grid {
@@ -93,4 +92,14 @@ body {
   gap: 20px;
 }
 
-/* ... (o resto do código) ... */
+.navbar-logo {
+  height: 40px;   /* tamanho ideal */
+  width: auto;
+  display: block;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 22px; /* controla a distância entre LOGO + links */
+}
