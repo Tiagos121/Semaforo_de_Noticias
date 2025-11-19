@@ -20,78 +20,99 @@ const MODEL_API_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent";
 
 // Componente Auxiliar para Visualizar o Espectro de Viés
-const BiasSpectrum = ({ scores, opinativo = 0, justificacao }) => {
+const BiasSpectrum = ({ scores, opinativo = 0,}) => {
   if (!scores || scores.length === 0) return null;
 
-  const esquerda = scores.find((s) => s.label === "esquerda")?.score || 0;
-  const direita = scores.find((s) => s.label === "direita")?.score || 0;
+  const esquerda = scores.find(s => s.label === "esquerda")?.score || 0;
+  const centro   = scores.find(s => s.label === "centro")?.score || 0;
 
-  const totalPol = esquerda + direita;
-  const posicaoNormalizada = totalPol > 0 ? ((direita - esquerda) / totalPol) * 50 : 0;
-  // posicaoNormalizada varia -50..+50 -> mapear para 0..100
-  const posicaoEspectro = 50 + posicaoNormalizada;
+  // normalização
+  const total = esquerda + centro + (scores.find(s => s.label === "direita")?.score || 0) || 1;
 
-  const sorted = [...scores].sort((a, b) => b.score - a.score);
-  const principalScore = sorted[0] || { label: "centro", score: 0 };
+  const pctEsquerda = (esquerda / total) * 100;
+  const pctCentro   = (centro / total) * 100;
+  // o resto fica para a direita automaticamente
 
-  let labelPrincipal = "";
-  let colorPrincipal = "";
-  let icon = "";
+  // Maior tendência
+  const principal = [...scores].sort((a, b) => b.score - a.score)[0];
 
-  if (principalScore.label === "esquerda") {
-    labelPrincipal = `ESQUERDA`;
-    colorPrincipal = "#dc2626";
+  let labelPrincipal = "CENTRO";
+  let icon = "⚪";
+  let colorPrincipal = "#4b5563";
+
+  if (principal.label === "esquerda") {
+    labelPrincipal = "ESQUERDA";
     icon = "🔴";
-  } else if (principalScore.label === "direita") {
-    labelPrincipal = `DIREITA`;
-    colorPrincipal = "#2563eb";
+    colorPrincipal = "#dc2626";
+  } else if (principal.label === "direita") {
+    labelPrincipal = "DIREITA";
     icon = "🔵";
-  } else {
-    labelPrincipal = `CENTRO`;
-    colorPrincipal = "#4b5563";
-    icon = "⚪";
+    colorPrincipal = "#2563eb";
   }
 
   return (
     <div className="bias-analysis mt-3 pt-3" style={{ borderTop: "1px solid #e5e7eb" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 13 }}>
-        <span style={{ fontWeight: 700, color: colorPrincipal, marginTop: 8}}>
-          {icon} {labelPrincipal} ({principalScore.score.toFixed(1)}%)
+      
+      {/* Cabeçalho */}
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 13, marginTop: "8px"}}>
+        <span style={{ fontWeight: 700, color: colorPrincipal }}>
+          {icon} {labelPrincipal} ({principal.score.toFixed(1)}%)
         </span>
-        <span style={{ backgroundColor: "#fef3c7", color: "#92400e", padding: "2px 8px", borderRadius: 12, fontWeight: 600, marginTop: 8}}>
+
+        <span style={{
+          backgroundColor: "#fef3c7",
+          color: "#92400e",
+          padding: "2px 8px",
+          borderRadius: 12,
+          fontWeight: 600,
+        }}>
           Opinativo: {Math.round(opinativo)}%
         </span>
       </div>
 
-      <div style={{ position: "relative", height: 10, backgroundColor: "#e5e7eb", borderRadius: 6, marginBottom: 6 }}>
-        <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "50%", backgroundColor: "#ef4444", borderTopLeftRadius: 6, borderBottomLeftRadius: 6 }} />
-        <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: "50%", backgroundColor: "#3b82f6", borderTopRightRadius: 6, borderBottomRightRadius: 6 }} />
-        <div style={{ position: "absolute", left: "50%", top: 0, bottom: 0, width: 2, backgroundColor: "#f3f4f6", border: "1px solid #9ca3af", transform: "translateX(-50%)" }} />
-        <div style={{
-          position: "absolute",
-          top: -3,
-          width: 12,
-          height: 12,
-          borderRadius: "50%",
-          backgroundColor: "black",
-          left: `${posicaoEspectro}%`,
-          transform: "translateX(-50%)",
-          boxShadow: "0 0 4px rgba(0,0,0,0.6)",
-          transition: "left 0.7s ease"
-        }} />
+      {/* BARRA SEM ESPAÇOS */}
+      <div
+        style={{
+          width: "100%",
+          height: 14,
+          display: "flex",
+          overflow: "hidden",
+          borderRadius: 6,
+          border: "1px solid black"
+        }}
+      >
+        {/* ESQUERDA */}
+        <div
+          style={{
+            width: `${pctEsquerda}%`,
+            backgroundColor: "#ef4444"
+          }}
+        ></div>
+
+        {/* CENTRO */}
+        <div
+          style={{
+            width: `${pctCentro}%`,
+            backgroundColor: "#d1d5db"
+          }}
+        ></div>
+
+        {/* DIREITA (automático → ocupa o resto) */}
+        <div
+          style={{
+            flexGrow: 1,
+            backgroundColor: "#3b82f6"
+          }}
+        ></div>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#6b7280" }}>
+      {/* Sub-labels */}
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, fontSize: 11, color: "#6b7280" }}>
         <span>Esquerda</span>
+        <span>Centro</span>
         <span>Direita</span>
       </div>
 
-      {justificacao && (
-        <div style={{ marginTop: 12, padding: 8, backgroundColor: "#fbfbfc", borderLeft: "3px solid #e6e6e6", color: "#374151", fontSize: 13 }}>
-          <p style={{ fontWeight: 700, marginBottom: 6 }}>Justificação da IA:</p>
-          <p style={{ margin: 0 }}>{justificacao}</p>
-        </div>
-      )}
     </div>
   );
 };
@@ -107,19 +128,20 @@ export default function Home() {
 
   const toggleFavorito = async (noticia) => {
     if (!user) {
-      alert("Precisas de fazer login para guardar favoritos.");
+      alert("Precisas de fazer login para guardar favoritos."); 
       return;
     }
 
     const ja = isFavorito(noticia.url);
+    
+    try {
     if (ja) {
       const fav = favoritos.find((f) => f.url === noticia.url);
       if (fav?.id) {
         await removerFavorito(fav.id);
-        alert("Favorito removido!");
+        console.log("Favorito removido via toggleFavorito.");
       }
     } else {
-      // guardar apenas campos essenciais para evitar documentos muito grandes
       const toSave = {
         url: noticia.url,
         title: noticia.title,
@@ -129,9 +151,14 @@ export default function Home() {
         vies: noticia.detalhes || null,
       };
       await adicionarFavorito(user.uid, toSave);
-      alert("Notícia guardada!");
+      console.log("Notícia guardada via toggleFavorito.");
     }
-  };
+  } catch (error) {
+    console.error("ERRO CRÍTICO NA FIREBASE:", error); 
+    // AGORA EXIBIMOS A MENSAGEM DE ERRO REAL PARA DIAGNOSTICAR:
+    alert(`ERRO DE FIREBASE: ${error.message}. Verifique as Permissões.`);
+  }
+};
 
   // GNEWS CONFIG - FILTRADO POR POLÍTICA E MAX=3
   const queryTermoPolitica = "política portuguesa OR governo OR eleições";
@@ -346,6 +373,7 @@ Devolva APENAS um objeto JSON válido. As percentagens ideológicas (esquerda, d
         {feed.map((noticia) => {
           const detalhes = noticia.detalhes || {};
           const scores = detalhes.scores_ideologicos || [];
+          const favorito = isFavorito(noticia.url); // Verifica o estado do favorito
 
           return (
             <div key={noticia.id} className="news-card" style={{ background: "#fff", padding: 14, borderRadius: 12, border: "1px solid #e6e6e6" }}>
@@ -358,34 +386,40 @@ Devolva APENAS um objeto JSON válido. As percentagens ideológicas (esquerda, d
                 />
               </div>
 
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                <div style={{ flex: 1 }}>
-                  <h2 className="news-title" style={{ margin: "0 0 6px 0", fontSize: 18 }}>
-                    <a href={noticia.url} target="_blank" rel="noopener noreferrer" className="news-link" style={{ color: "#111", textDecoration: "none" }}>
-                      {noticia.title}
-                    </a>
-                  </h2>
-                  <p className="news-desc" style={{ margin: 0, color: "#4b5563" }}>{noticia.description}</p>
-                  <p style={{ marginTop: 8, fontSize: 12, color: "#6b7280", marginBottom: 8}}>Fonte: {noticia.source?.name || "Desconhecida"}</p>
-                </div>
-
-                {/* Botão estrela - visível sempre, mas guarda só se autenticado.
-                    Se preferires testar sem login, podes permitir guardar sem login (não recomendado). */}
-                <div style={{ marginLeft: 8 }}>
-                  <button
-                    onClick={() => toggleFavorito(noticia)}
-                    title={isFavorito(noticia.url) ? "Remover favorito" : "Guardar favorito"}
-                    style={{ fontSize: 22, background: "none", border: "none", cursor: "pointer" }}
-                  >
-                    {isFavorito(noticia.url) ? "⭐" : "☆"}
-                  </button>
-                </div>
+              {/* Título e Descrição */}
+              {/* O bloco de título/descrição não precisa mais do flex para alinhar o botão, que foi movido */}
+              <div style={{ flex: 1 }}>
+                <h2 className="news-title" style={{ margin: "0 0 6px 0", fontSize: 18 }}>
+                  <a href={noticia.url} target="_blank" rel="noopener noreferrer" className="news-link" style={{ color: "#111", textDecoration: "none" }}>
+                    {noticia.title}
+                  </a>
+                </h2>
+                <p className="news-desc" style={{ margin: 0, color: "#4b5563" }}>{noticia.description}</p>
+                <p style={{ marginTop: 8, fontSize: 12, color: "#6b7280", marginBottom: 8}}>Fonte: {noticia.source?.name || "Desconhecida"}</p>
               </div>
 
               {/* Spectro */}
               {scores.length > 0 && (
                 <BiasSpectrum scores={scores} opinativo={detalhes.opinativo || 0} justificacao={detalhes.justificacao || ""} />
               )}
+              
+              {/* NOVO BOTÃO DE FAVORITO - Visível APENAS se houver 'user' autenticado */}
+              {user && (
+                <div className="favorito-button-container" style={{ textAlign: "center", paddingTop: 10, marginTop: 10, borderTop: "1px solid #f3f4f6" }}>
+                    <button
+                        onClick={() => toggleFavorito(noticia)}
+                        title={favorito ? "Remover favorito" : "Guardar favorito"}
+                        className={`favorite-toggle-btn ${favorito ? 'is-favorito' : ''}`}
+                    >
+                        {/* Usamos ★ e ☆ para consistência visual */}
+                        <span role="img" aria-label="favorito">
+                            {favorito ? "★" : "☆"}
+                        </span>
+                        {favorito ? " Guardado" : " Guardar"}
+                    </button>
+                </div>
+              )}
+
             </div>
           );
         })}

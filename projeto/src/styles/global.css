@@ -103,3 +103,53 @@ body {
   align-items: center;
   gap: 22px; /* controla a distância entre LOGO + links */
 }
+
+
+
+/* ESTILOS ESPECÍFICOS PARA O BOTÃO DE FAVORITO */
+.favorite-toggle-btn {
+  /* Tamanho e Estilo do Botão */
+  background: none;
+  border: 2px solid #ffcc00; /* Cor da borda amarelada (Stroke) */
+  color: #ffcc00; /* Cor inicial do ícone/texto */
+  font-size: 16px;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Estado HOVER: cor de fundo amarelada e cor de texto escura */
+.favorite-toggle-btn:hover {
+  background: #ffcc00;
+  color: #333; /* Texto escuro para contraste */
+  box-shadow: 0 4px 10px rgba(255, 204, 0, 0.4);
+}
+
+/* Estrela dentro do botão: ajusta o tamanho e cor */
+.favorite-toggle-btn span[role="img"] {
+  font-size: 24px; /* Aumenta a estrela */
+}
+
+/* Estado ATIVO (is-favorito): Preenchido e Amarelado */
+.favorite-toggle-btn.is-favorito {
+  background: #ffcc00; /* Fundo preenchido */
+  color: #333; /* Cor de texto/ícone escura */
+  border-color: #ffcc00; /* Borda da mesma cor para dar aspeto sólido */
+}
+
+/* Estado ATIVO + HOVER: Sem alteração de cor, mas com um ligeiro efeito de escala */
+.favorite-toggle-btn.is-favorito:hover {
+  transform: scale(1.03); /* Ligeiro aumento no hover */
+  background: #ffc400; /* Tom ligeiramente mais escuro para feedback */
+}
+
+/* Estilo do ícone quando está ativo */
+.favorite-toggle-btn.is-favorito span[role="img"] {
+    /* Garante que o ícone preenchido mantém a cor correta */
+    color: #333; 
+}

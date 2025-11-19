@@ -1,0 +1,9 @@
+Aspetos a melhorar antes de criar outras páginas: 
+
+1º- Modificar a barra de esquerda e direita para fazer com a percentagem ex: 100% centro ocupa toda a barra a branco, 50% esquerda ocupa a metade da barra a vermelho, e colocar o resto da percentagem com cores de outros vieses identificados(ex: 70% centro e 30% direita) uma parte pequena também preencherá a azul. colocar um stroke na barra para o branco não se confundir com o background do card que também é branco.
+
+
+2º- Arranjar Login In e Log Out: Ao carregar no log in, leva-me para um componente/página e pergunta se tenho registo ou se já tenho conta, tenho a opção de criar conta com email e password ou então posso logar com o google (aquelas páginas básicas de log-in ou registo). Ao fazer Log-in ou registo, na navbar mostra a foto de perfil da conta google e depois se quiser dar log-out tenho que carregar na foto de perfil, que redireciona para o componente/página de log-out onde tem um botão de dar Log-out e pergunta se quero sair (pode até mostrar informações como email e nome de utilizador).
+
+
+3º - Arranjar o sistema de guardar (primeiro o design da estrela está mal, eu quero que mostre a estrela embaixo do card com um botão grande e centrado, e depois usar outro design pra a estrela cheia que parece muito diferente da vazia, e eu queria igual à vazia de aspeto, só que preenchida. Queria que esse botão fosse assim meio amarelado ao fazer hover e a carregar. se eu carregar, ele vai chamar a função de favoritos e vai ficar amarelo, mas caso eu clicar outra vez, ele tira esse amarelado e fica só nas bordas(stroke)
