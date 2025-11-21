@@ -357,97 +357,109 @@ Devolva APENAS um objeto JSON válido. As percentagens ideológicas (esquerda, d
   }, [fetched, carregarEClassificarNoticias]);
 
   // RENDER
-  return (
-    <div className="page-container">
-      {/* Meteorologia */}
-      <div style={{ marginBottom: 18 }}>
-        <DisplayLocalizacao />
+  // RENDER
+return (
+  <div className="page-container">
+    {/* Meteorologia */}
+    <div style={{ marginBottom: 18 }}>
+      <DisplayLocalizacao />
+    </div>
+
+    <h1 className="page-title" style={{ backgroundColor: "rgb(79, 70, 229)", color: 'white', padding: '10px', textAlign: 'center' }}>
+      📰 Notícias de Política & Análise de Viés
+    </h1>
+
+    {loading && (
+      <div style={{ padding: 12, background: "#fff", borderRadius: 8, marginBottom: 12, color: "#374151" }}>
+        <strong>A carregar notícias políticas e a analisar viés...</strong>
       </div>
+    )}
 
-      <h1 className="page-title" style={{ backgroundColor: "rgb(79, 70, 229)", color: 'white', padding: '10px', textAlign: 'center' }}>📰 Notícias de Política & Análise de Viés</h1>
+    {error && (
+      <div style={{ padding: 12, background: "#fff0f0", borderRadius: 8, marginBottom: 12, color: "#9b1c1c" }}>
+        <strong>Erro: </strong>{error}
+      </div>
+    )}
 
-      {loading && (
-        <div style={{ padding: 12, background: "#fff", borderRadius: 8, marginBottom: 12, color: "#374151" }}>
-          <strong>A carregar notícias políticas e a analisar viés...</strong>
-        </div>
-      )}
+    <div className="news-grid" style={{ display: "grid", gap: 16 }}>
+      {feed.map((noticia) => {
+        const favorito = isFavorito(noticia.url);
 
-      {error && (
-        <div style={{ padding: 12, background: "#fff0f0", borderRadius: 8, marginBottom: 12, color: "#9b1c1c" }}>
-          <strong>Erro: </strong>{error}
-        </div>
-      )}
+        // Sincronização do Viés Guardado
+        const favoritoData = favoritos.find(f => f.url === noticia.url);
+        let noticiaParaCard = noticia;
 
-      <div className="news-grid" style={{ display: "grid", gap: 16 }}>
-        {feed.map((noticia) => {
-          const detalhes = noticia.detalhes || {};
-          const scores = detalhes.scores_ideologicos || [];
-          const favorito = isFavorito(noticia.url); // Verifica o estado do favorito
+        if (favorito && favoritoData && favoritoData.vies) {
+          noticiaParaCard = {
+            ...noticia,
+            detalhes: favoritoData.vies,
+          };
+        }
 
-          return (
-            <div key={noticia.id} className="news-card" style={{ background: "#fff", padding: 14, borderRadius: 12, border: "1px solid #e6e6e6" }}>
-              {/* Imagem com fallback */}
-              <div style={{ marginBottom: 10 }}>
-                <img
-                  src={noticia.image || defaultImage}
-                  alt={noticia.title}
-                  style={{ width: "100%", maxHeight: 160, objectFit: "cover", borderRadius: 8 }}
-                />
+        const detalhes = noticiaParaCard.detalhes || {};
+        const scores = detalhes.scores_ideologicos || [];
+
+        return (
+          <div key={noticia.id} className="news-card" style={{ background: "#fff", padding: 14, borderRadius: 12, border: "1px solid #e6e6e6" }}>
+            {/* Imagem com fallback */}
+            <div style={{ marginBottom: 10 }}>
+              <img
+                src={noticia.image || defaultImage}
+                alt={noticia.title}
+                style={{ width: "100%", maxHeight: 160, objectFit: "cover", borderRadius: 8 }}
+              />
+            </div>
+
+            {/* Título e Descrição */}
+            <div style={{ flex: 1 }}>
+              <h2 className="news-title" style={{ margin: "0 0 6px 0", fontSize: 18 }}>
+                <a href={noticia.url} target="_blank" rel="noopener noreferrer" className="news-link" style={{ color: "#111", textDecoration: "none" }}>
+                  {noticia.title}
+                </a>
+              </h2>
+              <p className="news-desc" style={{ margin: 0, color: "#4b5563" }}>{noticia.description}</p>
+              <p style={{ marginTop: 8, fontSize: 12, color: "#6b7280", marginBottom: 8}}>
+                Fonte: {noticia.source?.name || "Desconhecida"}
+              </p>
+            </div>
+
+            {/* Spectro - Usa os scores do objeto noticiaParaCard */}
+            {scores.length > 0 && (
+              <BiasSpectrum scores={scores} opinativo={detalhes.opinativo || 0} justificacao={detalhes.justificacao || ""} />
+            )}
+
+            {/* Botão de Favorito */}
+            {user && (
+              <div className="favorito-button-container" style={{ textAlign: "center", paddingTop: 10, marginTop: 10, borderTop: "1px solid #f3f4f6" }}>
+                <button
+                  onClick={() => toggleFavorito(noticia)}
+                  title={favorito ? "Remover favorito" : "Guardar favorito"}
+                  className={`favorite-toggle-btn ${favorito ? 'is-favorito' : ''}`}
+                >
+                  <span role="img" aria-label="favorito">
+                    {favorito ? "★" : "☆"}
+                  </span>
+                  {favorito ? " Guardado" : " Guardar"}
+                </button>
               </div>
+            )}
 
-              {/* Título e Descrição */}
-              {/* O bloco de título/descrição não precisa mais do flex para alinhar o botão, que foi movido */}
-              <div style={{ flex: 1 }}>
-                <h2 className="news-title" style={{ margin: "0 0 6px 0", fontSize: 18 }}>
-                  <a href={noticia.url} target="_blank" rel="noopener noreferrer" className="news-link" style={{ color: "#111", textDecoration: "none" }}>
-                    {noticia.title}
-                  </a>
-                </h2>
-                <p className="news-desc" style={{ margin: 0, color: "#4b5563" }}>{noticia.description}</p>
-                <p style={{ marginTop: 8, fontSize: 12, color: "#6b7280", marginBottom: 8}}>Fonte: {noticia.source?.name || "Desconhecida"}</p>
-              </div>
-
-              {/* Spectro */}
-              {scores.length > 0 && (
-                <BiasSpectrum scores={scores} opinativo={detalhes.opinativo || 0} justificacao={detalhes.justificacao || ""} />
-              )}
-              
-              {/* NOVO BOTÃO DE FAVORITO - Visível APENAS se houver 'user' autenticado */}
-              {user && (
-                <div className="favorito-button-container" style={{ textAlign: "center", paddingTop: 10, marginTop: 10, borderTop: "1px solid #f3f4f6" }}>
-                    <button
-                        onClick={() => toggleFavorito(noticia)}
-                        title={favorito ? "Remover favorito" : "Guardar favorito"}
-                        className={`favorite-toggle-btn ${favorito ? 'is-favorito' : ''}`}
-                    >
-                        {/* Usamos ★ e ☆ para consistência visual */}
-                        <span role="img" aria-label="favorito">
-                            {favorito ? "★" : "☆"}
-                        </span>
-                        {favorito ? " Guardado" : " Guardar"}
-                    </button>
-                </div>
-              )}
-
-              {/* Indicação para ler a notícia completa - NOVO ESTILO CSS */}
-            <div style={{ marginTop: 15, textAlign: "center" }}> 
+            {/* Link para ler a notícia completa */}
+            <div style={{ marginTop: 15, textAlign: "center" }}>
               <a 
                 href={noticia.url} 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="news-full-link" // <--- NOVA CLASSE AQUI
+                className="news-full-link"
               >
                 <i className="fas fa-info-circle"></i> Ler notícia completa
               </a>
             </div>
 
-
-
-
-            </div>
-          );
-        })}
-      </div>
+          </div>
+        );
+      })}
     </div>
-  );
+  </div>
+);
 }

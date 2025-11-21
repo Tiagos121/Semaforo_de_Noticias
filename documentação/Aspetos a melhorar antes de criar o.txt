@@ -7,3 +7,11 @@ Aspetos a melhorar antes de criar outras páginas:
 
 
 3º - Arranjar o sistema de guardar (primeiro o design da estrela está mal, eu quero que mostre a estrela embaixo do card com um botão grande e centrado, e depois usar outro design pra a estrela cheia que parece muito diferente da vazia, e eu queria igual à vazia de aspeto, só que preenchida. Queria que esse botão fosse assim meio amarelado ao fazer hover e a carregar. se eu carregar, ele vai chamar a função de favoritos e vai ficar amarelo, mas caso eu clicar outra vez, ele tira esse amarelado e fica só nas bordas(stroke)
+
+
+
+
+
+4º - Página para verificar nocticias com mais viés
+5º - Barra de pesquisa para pesquisar por noticias e Keys/tags para pesquisa.
+6º - Blindspot topics (ver no GroundNews)

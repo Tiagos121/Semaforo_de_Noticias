@@ -16,7 +16,7 @@ export default function Navbar() {
 
     <Link to="/guardados">⭐ Guardados</Link>
     <Link to="/locais">📍 Notícias Locais</Link>
-    <Link to="/videos">🎥 Vídeos Potentes</Link>
+    <Link to="/videos">🎥 Vídeos e Podcasts</Link>
   </div>
 
   <div className="navbar-right">
