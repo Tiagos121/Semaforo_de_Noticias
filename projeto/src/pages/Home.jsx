@@ -21,17 +21,18 @@ const MODEL_API_URL =
 
 // Componente Auxiliar para Visualizar o Espectro de Viés
 const BiasSpectrum = ({ scores, opinativo = 0,}) => {
-  if (!scores || scores.length === 0) return null;
+    if (!scores || scores.length === 0) return null;
 
   const esquerda = scores.find(s => s.label === "esquerda")?.score || 0;
   const centro   = scores.find(s => s.label === "centro")?.score || 0;
+  const direita  = scores.find(s => s.label === "direita")?.score || 0;
 
-  // normalização
-  const total = esquerda + centro + (scores.find(s => s.label === "direita")?.score || 0) || 1;
+  // normalização CORRETA (sem duplicar direita)
+  const total = esquerda + centro + direita || 1;
 
   const pctEsquerda = (esquerda / total) * 100;
   const pctCentro   = (centro / total) * 100;
-  // o resto fica para a direita automaticamente
+  const pctDireita  = (direita / total) * 100;
 
   // Maior tendência
   const principal = [...scores].sort((a, b) => b.score - a.score)[0];
@@ -97,11 +98,19 @@ const BiasSpectrum = ({ scores, opinativo = 0,}) => {
           }}
         ></div>
 
-        {/* DIREITA (automático → ocupa o resto) */}
+        {/* DIREITA — percentagem real */}
+        <div
+          style={{
+            width: `${pctDireita}%`,
+            backgroundColor: "#3b82f6"
+          }}
+        ></div>
+
+        {/* RESTO — parte que estava a causar o espaço */}
         <div
           style={{
             flexGrow: 1,
-            backgroundColor: "#3b82f6"
+            backgroundColor: "#000"
           }}
         ></div>
       </div>
@@ -419,6 +428,21 @@ Devolva APENAS um objeto JSON válido. As percentagens ideológicas (esquerda, d
                     </button>
                 </div>
               )}
+
+              {/* Indicação para ler a notícia completa - NOVO ESTILO CSS */}
+            <div style={{ marginTop: 15, textAlign: "center" }}> 
+              <a 
+                href={noticia.url} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="news-full-link" // <--- NOVA CLASSE AQUI
+              >
+                <i className="fas fa-info-circle"></i> Ler notícia completa
+              </a>
+            </div>
+
+
+
 
             </div>
           );

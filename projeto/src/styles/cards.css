@@ -58,3 +58,23 @@
 .save-btn:hover {
   background: #eab308;
 }
+
+
+
+/* --- ESTILOS PARA O LINK 'LER NOTÍCIA COMPLETA' --- */
+.news-full-link {
+  font-size: 14px;
+  color: rgb(79, 70, 229); /* Cor inicial do texto (roxo) */
+  text-decoration: none; /* Sem sublinhado por defeito */
+  opacity: 0.6; /* Estado "embaciado" inicial */
+  transition: color 0.3s ease, opacity 0.3s ease, text-decoration 0.3s ease; /* Transições suaves */
+  display: inline-flex; /* Para alinhar o ícone e o texto */
+  align-items: center;
+  gap: 5px; /* Espaço entre o ícone e o texto */
+}
+
+.news-full-link:hover {
+  color: #000000; /* Cor ao fazer hover (preto) */
+  text-decoration: underline; /* Sublinhado ao fazer hover */
+  opacity: 1; /* Fica mais claro (totalmente opaco) ao fazer hover */
+}
