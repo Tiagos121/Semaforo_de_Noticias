@@ -7,9 +7,25 @@ import NewsCard from "../components/NewsCard";
 import { useLocationData } from "../hooks/useLocationData";
 import defaultImage from "../assets/fundo_sn.png";
 
+// 🔑 NOVO: Importar o componente de localização/meteorologia
+import DisplayLocalizacao from "../components/tempo_local/DisplayLocalizacao"; 
+
 const GNEWS_API_KEY = import.meta.env.VITE_GNEWS_API_KEY || "";
 const TARGET = 3;
 const CACHE_TTL_MS = 5 * 60 * 1000;
+
+// ------------------------
+//     DADOS DE VIÉS PADRÃO (Para que o BiasSpectrum apareça)
+// ------------------------
+const DEFAULT_VIES_DETAILS = {
+  opinativo: 0,
+  justificacao: "Sem análise de viés (Notícia Local)",
+  scores_ideologicos: [
+    { label: "centro", score: 100 },
+    { label: "esquerda", score: 0 },
+    { label: "direita", score: 0 },
+  ],
+};
 
 // ------------------------
 //     LOCAL CACHE
@@ -51,10 +67,10 @@ function buildTermsFromLocation(loc) {
   const t = [];
 
   // Prioriza nomes mais prováveis de ter notícias dedicadas
-  if (loc.city) t.push(loc.city);         // Nome principal (pode ser city/town/village/nearbyCity)
-  if (loc.nearbyCity) t.push(loc.nearbyCity); // O nome da cidade mais próxima (se `city` for fraco)
-  if (loc.county) t.push(loc.county);     // Concelho/Município
-  if (loc.state) t.push(loc.state);       // Distrito/Estado
+  if (loc.city) t.push(loc.city); 
+  if (loc.nearbyCity) t.push(loc.nearbyCity); 
+  if (loc.county) t.push(loc.county); 
+  if (loc.state) t.push(loc.state); 
 
   // Termos mais específicos ou menos relevantes (último recurso)
   if (loc.town && loc.town !== loc.city) t.push(loc.town);
@@ -68,7 +84,7 @@ function buildTermsFromLocation(loc) {
 }
 
 // ------------------------
-//      FETCH GNEWS
+//     FETCH GNEWS
 // ------------------------
 async function fetchGNewsForTerm(term) {
   if (!term) return [];
@@ -82,7 +98,6 @@ async function fetchGNewsForTerm(term) {
     return [];
   }
 
-  // Aumentar a robustez da query para incluir 'noticias' no termo de pesquisa local
   const q = `noticias AND "${term}"`; 
   const url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(
     q
@@ -92,7 +107,7 @@ async function fetchGNewsForTerm(term) {
     const res = await fetch(url);
 
     if (res.status === 429) {
-      console.warn("429 GNews → limit atingido");
+      console.warn("429 GNews -> limit atingido");
       return [];
     }
 
@@ -111,14 +126,14 @@ async function fetchGNewsForTerm(term) {
 }
 
 // ------------------------
-//      COMPONENTE
+//     COMPONENTE
 // ------------------------
 export default function NoticiasLocais() {
   const { user } = useContext(AuthContext);
   const favoritos = useFavoritos();
   const isFavorito = (url) => favoritos.some((f) => f.url === url);
 
-  const { location, loading: locLoading, error: locError } = useLocationData();
+  const { location, loading: locLoading } = useLocationData();
 
   const [feed, setFeed] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -144,7 +159,8 @@ export default function NoticiasLocais() {
           description: noticia.description,
           image: noticia.image || defaultImage,
           source: noticia.source || {},
-          vies: noticia.detalhes || null,
+          // CORREÇÃO: Salvar os detalhes de viés padrão
+          vies: noticia.detalhes || DEFAULT_VIES_DETAILS, 
         });
       }
     } catch {
@@ -166,7 +182,6 @@ export default function NoticiasLocais() {
       const seen = new Set();
 
       for (const t of terms) {
-        // Se já tivermos o suficiente, não precisamos de mais pesquisas caras
         if (collected.length >= TARGET) break;
         
         const arts = await fetchGNewsForTerm(t);
@@ -176,11 +191,13 @@ export default function NoticiasLocais() {
 
           if (!seen.has(a.url)) {
             seen.add(a.url);
+            
+            // CORREÇÃO: Injetar os detalhes de viés padrão
             collected.push({
               ...a,
               id: a.url,
               image: a.image || defaultImage,
-              detalhes: a.detalhes || {},
+              detalhes: DEFAULT_VIES_DETAILS, // <--- INJEÇÃO AQUI
             });
           }
         }
@@ -207,16 +224,11 @@ export default function NoticiasLocais() {
       <h1 className="page-title" style={{ textAlign: "center" }}>
         📰 Notícias Locais
       </h1>
-
-      {locLoading && <p>A obter localização…</p>}
-      {locError && <p style={{ color: "red" }}>{locError}</p>}
-
-      {!locLoading && (
-        <p style={{ marginBottom: 20 }}>
-          📍 Local detectado: <strong>{location.city}</strong>
-          {location.isFallback && <span> (Localização por defeito)</span>}
-        </p>
-      )}
+      
+      {/* 🔄 NOVO: Componente DisplayLocalizacao para consistência */}
+      <div style={{ marginBottom: 18 }}>
+        <DisplayLocalizacao />
+      </div>
 
       {loading && <p>A carregar notícias…</p>}
       {error && <p style={{ color: "red" }}>{error}</p>}
@@ -228,6 +240,7 @@ export default function NoticiasLocais() {
             noticia={noticia}
             isFavorito={isFavorito}
             toggleFavorito={toggleFavorito}
+            favoritos={favoritos} 
           />
         ))}
       </div>
