@@ -54,7 +54,12 @@ export default function Guardados() {
 
   return (
     <div className="page-container">
-      <h1 className="page-title">⭐ Guardados</h1>
+      <div style={{backgroundColor: "#9ca3af", padding: "25px", marginBottom: 20, borderRadius:"40px"}}>
+        <h1 style={{ fontSize: 28, marginBottom: 8, color: "white"}}>⭐ Guardados</h1>
+        <p style={{ color: "#4b5563", marginBottom: 18 }}>
+          Notícias Guardadas. Podes remover dos guardados ao carregar na estrela.
+        </p>
+      </div>
 
       {favoritos.length === 0 && (
         <p className="placeholder">Ainda não tens favoritos.</p>

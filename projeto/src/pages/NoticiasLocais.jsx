@@ -205,19 +205,31 @@ const { location, loading: locLoading } = useLocationData();
   // ----------------------
   return (
     <div className="page-container">
-      <h1 className="page-title" style={{ textAlign: "center" }}>
-        📰 Notícias Locais
-      </h1>
       
       {/* 🔑 SOLUÇÃO: Passar a location por prop. Isto impede o DisplayLocalizacao de carregar a localização novamente. */}
       <div style={{ marginBottom: 18 }}>
         <DisplayLocalizacao location={location} /> 
       </div>
 
-      {/* ❌ REMOVIDO: Blocos de JSX manuais para locError */}
+      {/* Separador */}
+      <div style={{backgroundColor: "#9ca3af", padding: "25px", marginBottom: 20, borderRadius:"40px"}}>
+        <h1 style={{ fontSize: 28, marginBottom: 8, color: "white"}}>📍Notícias Locais</h1>
+        <p style={{ color: "#4b5563", marginBottom: 18 }}>
+          Notícias Locais com análise de viés. Podes guardar artigos com a estrela.
+        </p>
+      </div>
 
-      {loading && <p>A carregar notícias…</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {loading && (
+        <div style={{ padding: 12, background: "#fff", borderRadius: 10, marginBottom: 12 }}>
+          <strong>A carregar notícias e a analisar viés…</strong>
+        </div>
+      )}
+
+      {error && (
+        <div style={{ padding: 12, background: "#fff0f0", borderRadius: 8, marginBottom: 12, color: "#b91c1c" }}>
+          <strong>Erro:</strong> {error}
+        </div>
+      )}
 
       <div className="news-grid" style={{ display: "grid", gap: 16 }}>
         {feed.map((noticia) => (
