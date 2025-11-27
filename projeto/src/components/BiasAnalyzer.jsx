@@ -49,12 +49,17 @@ function cacheSetLocal(key, value) {
     }
 }
 
+function safeBase64(str) {
+  return btoa(unescape(encodeURIComponent(str)));
+}
+
 // ------------------------
 //     FUNÇÃO DE ANÁLISE DE VIÉS (A lógica da Gemini centralizada)
 // ------------------------
 async function analisarVies(titulo, descricao) {
   // Cria uma chave de cache única para esta notícia (usando base64 para segurança/unicidade)
-  const cacheKey = `vies_${btoa(titulo.substring(0, 50) + descricao.substring(0, 50))}`;
+  const base = titulo.substring(0, 50) + descricao.substring(0, 50);
+  const cacheKey = `vies_${safeBase64(base)}`;
   const cached = cacheGetLocal(cacheKey);
   if (cached) return cached;
   

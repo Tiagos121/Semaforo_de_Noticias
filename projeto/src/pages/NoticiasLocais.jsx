@@ -4,28 +4,16 @@ import { AuthContext } from "../context/AuthContextValue";
 import { useFavoritos } from "../hooks/useFavoritos";
 import { adicionarFavorito, removerFavorito } from "../firebase/favoritos";
 import NewsCard from "../components/NewsCard";
-import { useLocationData } from "../hooks/useLocationData";
+// O hook useLocationData é mantido para fornecer os dados ao carregarFeed
+import { useLocationData } from "../hooks/useLocationData"; 
 import defaultImage from "../assets/fundo_sn.png";
 
-// 🔑 NOVO: Importar o componente de localização/meteorologia
+// Importar o DisplayLocalizacao (que exibe a meteorologia/localização)
 import DisplayLocalizacao from "../components/tempo_local/DisplayLocalizacao"; 
 
 const GNEWS_API_KEY = import.meta.env.VITE_GNEWS_API_KEY || "";
-const TARGET = 3;
+const TARGET = 5;
 const CACHE_TTL_MS = 5 * 60 * 1000;
-
-// ------------------------
-//     DADOS DE VIÉS PADRÃO (Para que o BiasSpectrum apareça)
-// ------------------------
-const DEFAULT_VIES_DETAILS = {
-  opinativo: 0,
-  justificacao: "Sem análise de viés (Notícia Local)",
-  scores_ideologicos: [
-    { label: "centro", score: 100 },
-    { label: "esquerda", score: 0 },
-    { label: "direita", score: 0 },
-  ],
-};
 
 // ------------------------
 //     LOCAL CACHE
@@ -34,14 +22,12 @@ function cacheGet(key) {
   try {
     const raw = localStorage.getItem(key);
     if (!raw) return null;
-
     const parsed = JSON.parse(raw);
     if (Date.now() - parsed.ts > CACHE_TTL_MS) {
       localStorage.removeItem(key);
       return null;
     }
     return parsed.value;
-
   } catch {
     return null;
   }
@@ -59,27 +45,24 @@ function cacheSet(key, value) {
 }
 
 // ------------------------
-//     CASCATA DE TERMOS (Otimizada)
+//     CASCATA DE TERMOS
 // ------------------------
 function buildTermsFromLocation(loc) {
   if (!loc) return ["Portugal"];
 
   const t = [];
 
-  // Prioriza nomes mais prováveis de ter notícias dedicadas
   if (loc.city) t.push(loc.city); 
   if (loc.nearbyCity) t.push(loc.nearbyCity); 
   if (loc.county) t.push(loc.county); 
   if (loc.state) t.push(loc.state); 
 
-  // Termos mais específicos ou menos relevantes (último recurso)
   if (loc.town && loc.town !== loc.city) t.push(loc.town);
   if (loc.village && loc.village !== loc.city) t.push(loc.village);
   if (loc.suburb && loc.suburb !== loc.city) t.push(loc.suburb);
   
-  t.push("Portugal"); // Fallback final
+  t.push("Portugal"); 
 
-  // Garante que não há duplicados e remove nulos/vazios
   return [...new Set(t)].filter(Boolean);
 }
 
@@ -133,7 +116,8 @@ export default function NoticiasLocais() {
   const favoritos = useFavoritos();
   const isFavorito = (url) => favoritos.some((f) => f.url === url);
 
-  const { location, loading: locLoading } = useLocationData();
+  // 🔑 NECESSÁRIO: Obter location, loading para o carregarFeed
+const { location, loading: locLoading } = useLocationData();
 
   const [feed, setFeed] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -159,8 +143,8 @@ export default function NoticiasLocais() {
           description: noticia.description,
           image: noticia.image || defaultImage,
           source: noticia.source || {},
-          // CORREÇÃO: Salvar os detalhes de viés padrão
-          vies: noticia.detalhes || DEFAULT_VIES_DETAILS, 
+          // Viés será injetado/analisado pelo NewsCard/BiasAnalyzer
+          vies: noticia.detalhes || {}, 
         });
       }
     } catch {
@@ -170,7 +154,8 @@ export default function NoticiasLocais() {
 
   // CARREGAR FEED --------------------------------
   const carregarFeed = useCallback(async () => {
-    if (!location || locLoading) return;
+    // Depende de location e locLoading para iniciar a pesquisa
+    if (!location || locLoading) return; 
 
     setLoading(true);
     setError(null);
@@ -192,12 +177,11 @@ export default function NoticiasLocais() {
           if (!seen.has(a.url)) {
             seen.add(a.url);
             
-            // CORREÇÃO: Injetar os detalhes de viés padrão
             collected.push({
               ...a,
               id: a.url,
               image: a.image || defaultImage,
-              detalhes: DEFAULT_VIES_DETAILS, // <--- INJEÇÃO AQUI
+              detalhes: {}, // Detalhes vazios para o BiasAnalyzer analisar
             });
           }
         }
@@ -225,10 +209,12 @@ export default function NoticiasLocais() {
         📰 Notícias Locais
       </h1>
       
-      {/* 🔄 NOVO: Componente DisplayLocalizacao para consistência */}
+      {/* 🔑 SOLUÇÃO: Passar a location por prop. Isto impede o DisplayLocalizacao de carregar a localização novamente. */}
       <div style={{ marginBottom: 18 }}>
-        <DisplayLocalizacao />
+        <DisplayLocalizacao location={location} /> 
       </div>
+
+      {/* ❌ REMOVIDO: Blocos de JSX manuais para locError */}
 
       {loading && <p>A carregar notícias…</p>}
       {error && <p style={{ color: "red" }}>{error}</p>}

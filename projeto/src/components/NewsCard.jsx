@@ -5,6 +5,7 @@ import '../styles/cards.css'; // Importa os estilos de news-card
 // Importar componentes e hooks necessários
 import { AuthContext } from "../context/AuthContextValue"; // Para o estado de login (user)
 import BiasSpectrum from "../components/BiasSpectrum"; // Componente BiasSpectrum
+import BiasAnalyzer from "../components/BiasAnalyzer"; // Componente BiasAnalyzer
 import defaultImage from "../assets/fundo_sn.png"; // Imagem default
 
 // 🔄 NewsCard RECEBE as funções de estado e toggle dos pais
@@ -69,12 +70,20 @@ export default function NewsCard({ noticia, isFavorito, toggleFavorito}) {
       </div>
 
       {/* Spectro de viés */}
-      {scores.length > 0 && (
+      {scores.length > 0 ? (
         <BiasSpectrum
-          scores={scores}
-          opinativo={detalhes.opinativo || 0}
+            scores={scores}
+            opinativo={detalhes.opinativo || 0}
         />
-      )}
+          ) : (
+        /* Se não existe viés, executa a análise */
+        <BiasAnalyzer
+            titulo={noticia.title}
+            description={noticia.description}
+            existingDetails={null}
+        />
+    )}
+
 
       {/* Botão de Favorito - NOVO ESTILO (Visível apenas se houver user) */}
       {user && (

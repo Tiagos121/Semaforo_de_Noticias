@@ -1,199 +1,146 @@
 // src/pages/Home.jsx
-import React, { useEffect, useState, useCallback, useContext } from "react";
+import React, { useEffect, useState, useCallback, useContext } from "react"; // 🔑 CORRIGIDO: Garante que os hooks estão importados
 import { AuthContext } from "../context/AuthContextValue";
-import { useFavoritos } from "../hooks/useFavoritos";
-import { adicionarFavorito, removerFavorito } from "../firebase/favoritos";
-import NewsCard from "../components/NewsCard";
-import BiasAnalyzer from "../components/BiasAnalyzer";
+
+// Meteorologia
 import DisplayLocalizacao from "../components/tempo_local/DisplayLocalizacao";
+
+// Favoritos (Firebase helpers e hook)
+import { adicionarFavorito, removerFavorito } from "../firebase/favoritos";
+import { useFavoritos } from "../hooks/useFavoritos";
+
+// 🔑 ESSENCIAL: Importar o NewsCard
+import NewsCard from "../components/NewsCard"; 
+
+// Imagem default local
 import defaultImage from "../assets/fundo_sn.png";
 
+// Variáveis de API e Cache (Movidas para fora do componente para estabilidade)
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 const GNEWS_API_KEY = import.meta.env.VITE_GNEWS_API_KEY || "";
-const MAX_NEWS = 8; // número máximo de artigos a pedir ao GNews (ajusta se quiseres)
-const CACHE_TTL_MS = 1000 * 60 * 5; // 5 minutos cache para GNews / Bias
+const MAX_NEWS = 8;
+const CACHE_KEY = 'cachedFeedData';
 
-// Simple localStorage cache helpers (mínimo)
-function cacheGet(key) {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed?.ts || Date.now() - parsed.ts > parsed.ttl) {
-      localStorage.removeItem(key);
-      return null;
-    }
-    return parsed.value;
-  } catch (err) {
-    console.warn("cacheGet falhou:", err);
-    return null;
-  }
-}
-function cacheSet(key, value, ttl = CACHE_TTL_MS) {
-  try {
-    localStorage.setItem(key, JSON.stringify({ ts: Date.now(), ttl, value }));
-  } catch (err) {
-    console.warn("cacheSet falhou:", err);
-  }
-}
+// Constantes GNews (Estáveis)
+const queryTermoPolitica = "política portuguesa OR governo OR eleições";
+const CACHE_BUST = Date.now(); 
+const NOTICIAS_API_URL = `https://gnews.io/api/v4/search?q=${encodeURIComponent(queryTermoPolitica)}&lang=pt&country=pt&max=${MAX_NEWS}&apikey=${GNEWS_API_KEY}&cache=${CACHE_BUST}`;
+
 
 export default function Home() {
   const { user } = useContext(AuthContext);
   const favoritos = useFavoritos();
+
   const isFavorito = (url) => favoritos.some((f) => f.url === url);
 
-  const [feed, setFeed] = useState([]); // artigos com detalhe (inclui .detalhes vindo do BiasAnalyzer)
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // toggle favorito (chama helpers firebase)
   const toggleFavorito = async (noticia) => {
     if (!user) {
-      alert("Faz login para guardar favoritos.");
+      alert("Precisas de fazer login para guardar favoritos."); 
       return;
     }
 
-    const existe = isFavorito(noticia.url);
+    const ja = isFavorito(noticia.url);
+    
     try {
-      if (existe) {
+      if (ja) {
         const fav = favoritos.find((f) => f.url === noticia.url);
-        if (fav?.id) await removerFavorito(fav.id);
+        if (fav?.id) {
+          await removerFavorito(fav.id);
+          alert("✅ Removido dos Guardados. Voltará a aparecer no Home."); 
+        }
       } else {
-        await adicionarFavorito(user.uid, {
+        const toSave = {
           url: noticia.url,
           title: noticia.title,
           description: noticia.description,
           image: noticia.image || defaultImage,
           source: noticia.source || {},
           vies: noticia.detalhes || null,
-        });
+        };
+        await adicionarFavorito(user.uid, toSave);
+        alert("⭐ Guardado! A notícia foi movida para a secção Guardados.");
       }
-    } catch (err) {
-      console.error("Erro favorites:", err);
-      alert("Erro ao guardar/remover favorito.");
+    } catch (error) {
+      console.error("ERRO CRÍTICO NA FIREBASE:", error); 
+      alert(`ERRO DE FIREBASE: ${error.message}. Verifique as Permissões.`);
     }
   };
 
-  // Busca GNews (com cache simples)
+  const [feed, setFeed] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  // ❌ REMOVER: [fetched, setFetched] não é necessário e simplifica o useEffect.
+  // const [fetched, setFetched] = useState(false); 
+
+
+  // 1. Fetch GNews (APENAS CARREGA NOTÍCIAS)
   const fetchGNews = useCallback(async (query, max = MAX_NEWS) => {
     if (!GNEWS_API_KEY) {
-      console.warn("GNews API key ausente — fetch abortado.");
-      return [];
+        console.warn("GNews API key ausente — fetch abortado.");
+        return [];
     }
-
-    const cacheKey = `gnews_${query}_${max}`;
-    const cached = cacheGet(cacheKey);
-    if (cached) return cached;
 
     const url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&lang=pt&country=pt&max=${max}&apikey=${GNEWS_API_KEY}`;
 
     try {
-      const res = await fetch(url);
-      if (res.status === 429) {
-        console.warn("GNews 429 (rate limit) — devolvendo vazio.");
-        return [];
-      }
-      if (!res.ok) {
-        console.warn("GNews fetch erro:", res.status);
-        return [];
-      }
+        const res = await fetch(url);
+        if (res.status === 429) {
+            console.warn("GNews 429 (rate limit)");
+            return [];
+        }
+        if (!res.ok) return [];
 
-      const data = await res.json();
-      const articles = data.articles || [];
-      cacheSet(cacheKey, articles);
-      return articles;
+        const data = await res.json();
+        const articles = data.articles || [];
+        return articles;
     } catch (err) {
-      console.warn("Erro fetch GNews:", err);
-      return [];
+        console.warn("Erro fetch GNews:", err);
+        return [];
     }
   }, []);
 
-  // Pede a análise de viés para um artigo via BiasAnalyzer com cache por URL/trecho
-  const analyzeWithCache = useCallback(async (article) => {
-    const biasCacheKey = `bias_${article.url || article.title}`;
-    const cached = cacheGet(biasCacheKey);
-    if (cached) return cached;
 
-    // Preparar payload para o BiasAnalyzer — o teu BiasAnalyzer deve aceitar objeto ou string
-    // Se o teu BiasAnalyzer espera string, altera para `${article.title} - ${article.description}`
-    const payload = {
-      title: article.title,
-      description: article.description || "",
-      content: article.content || "",
-      source: article.source || {},
-    };
-
-    try {
-      const result = await BiasAnalyzer(payload);
-      cacheSet(biasCacheKey, result, 1000 * 60 * 60); // 1h
-      return result;
-    } catch (err) {
-      console.error("BiasAnalyzer falhou:", err);
-      // devolve fallback neutro
-      const fallback = {
-        label: "centro",
-        score: "N/A",
-        detalhes: {
-          opinativo: 0,
-          justificacao: "Análise indisponível (fallback).",
-          scores_ideologicos: [
-            { label: "esquerda", score: 33.3 },
-            { label: "centro", score: 33.3 },
-            { label: "direita", score: 33.3 },
-          ],
-        },
-      };
-      return fallback;
-    }
-  }, []);
-
-  // Função principal: carrega notícias e analisa viés para cada uma
+  // 2. Carregar Notícias (Limpo de Lógica de IA)
   const carregarNoticias = useCallback(async (opts = {}) => {
     setLoading(true);
     setError(null);
 
     try {
-      // Query mais geral para Home (mais abrangente para reduzir risco de zero resultados)
-      const query =
-        opts.query ||
-        "política portuguesa OR governo OR eleições OR economia OR sociedade OR atualidade";
-      const articles = await fetchGNews(query, MAX_NEWS);
+        const query = opts.query || queryTermoPolitica; 
+        const articles = await fetchGNews(query, MAX_NEWS);
 
-      if (!articles || articles.length === 0) {
-        setFeed([]);
-        setLoading(false);
-        return;
-      }
+        if (!articles || articles.length === 0) {
+            setFeed([]);
+            return;
+        }
 
-      const processed = [];
-      for (const art of articles) {
-        const artigo = {
-          ...art,
-          image: art.image || defaultImage,
-        };
+        const processed = [];
+        for (const art of articles) {
+            const artigo = {
+                ...art,
+                id: art.url,
+                image: art.image || defaultImage,
+                detalhes: {}, // Deixamos os detalhes vazios. O BiasAnalyzer vai preencher.
+            };
+            processed.push(artigo);
+        }
 
-        const vies = await analyzeWithCache(artigo);
-        processed.push({
-          ...artigo,
-          detalhes: vies.detalhes || vies,
-        });
-
-        // pequeno delay para suavizar chamadas ao Gemini/BiasAnalyzer
-        await new Promise((r) => setTimeout(r, 300));
-      }
-
-      setFeed(processed);
+        setFeed(processed);
     } catch (err) {
-      console.error("Erro ao carregar notícias:", err);
-      setError("Erro ao carregar notícias. Vê o console para mais detalhes.");
+        console.error("Erro ao carregar notícias:", err);
+        setError("Erro ao carregar notícias. Vê o console para mais detalhes.");
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  }, [fetchGNews, analyzeWithCache]);
+  }, [fetchGNews]);
 
-  // Inicial fetch
+
+  // 3. Efeito de Carregamento (Corrigido e Simplificado)
   useEffect(() => {
+    // 🔑 CORRIGIDO: Chama carregarNoticias apenas na montagem (dependência vazia)
     carregarNoticias();
   }, [carregarNoticias]);
+
 
   // RENDER
   return (
@@ -226,9 +173,30 @@ export default function Home() {
         className="news-grid"
         style={{ display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}
       >
-        {feed.map((noticia) => (
-          <NewsCard key={noticia.url} noticia={noticia} isFavorito={isFavorito} toggleFavorito={toggleFavorito} />
-        ))}
+        {feed.map((noticia) => {
+            const favorito = isFavorito(noticia.url); 
+
+            // 🔑 LÓGICA DE SINCRONIZAÇÃO DO VIÉS
+            const favoritoData = favoritos.find(f => f.url === noticia.url);
+            let noticiaParaCard = noticia;
+
+            if (favorito && favoritoData && favoritoData.vies) {
+                noticiaParaCard = {
+                    ...noticia,
+                    detalhes: favoritoData.vies, // Substitui o viés atual pelo salvo
+                };
+            }
+
+            // 🔑 USAMOS APENAS o NewsCard
+            return (
+                <NewsCard 
+                    key={noticia.url} 
+                    noticia={noticiaParaCard} 
+                    isFavorito={isFavorito}
+                    toggleFavorito={toggleFavorito} 
+                />
+            );
+        })}
       </div>
 
       {!loading && feed.length === 0 && (

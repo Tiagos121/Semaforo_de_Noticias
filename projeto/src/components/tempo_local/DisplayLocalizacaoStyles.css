@@ -196,6 +196,7 @@
   align-items: center;
   color: var(--text-main);
   padding: 2rem;
+   border-radius: 40px;
 }
 
 /* Caixa central mais pequena */

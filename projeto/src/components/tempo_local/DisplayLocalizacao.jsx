@@ -1,3 +1,4 @@
+// src/components/tempo_local/DisplayLocalizacao.jsx
 import React from "react";
 import {
   useLocationData,
@@ -6,24 +7,33 @@ import {
   getIconUrl,
 } from "../../hooks/useWeatherAndLocation";
 
-// Importar o nosso novo ficheiro CSS
+// Importar o nosso novo ficheiro CSS (mantém o teu estilo original)
 import "./DisplayLocalizacaoStyles.css";
 
 // Componente de Ícone (Font Awesome)
-// (CloudIcon não era usado, por isso removi-o)
 const MapPinIcon = ({ className }) => (
   <i className={`fas fa-map-marker-alt ${className}`}></i>
 );
 
 // ====================================================================
-// COMPONENTE ÚNICO: Localização + Meteorologia Atual + Previsão Semanal
+// COMPONENTE: Localização + Meteorologia Atual + Previsão Semanal
+// - Suporta 2 modos:
+//   1) Autónomo: sem prop "location" -> usa useLocationData() internamente (modo Home)
+//   2) Controlado: recebe prop "location" -> usa essa location e não corre o hook interno (modo NoticiasLocais)
 // ====================================================================
-export default function DisplayLocalizacao() {
-  const {
-    location,
-    loading: locationLoading,
-    error: locationError,
-  } = useLocationData();
+export default function DisplayLocalizacao({ location: externalLocation }) {
+  // Hook interno (usado apenas se não houver externalLocation)
+  const internal = useLocationData();
+
+  // Decide qual location usar (prop ganha prioridade)
+  const location = externalLocation || internal.location;
+
+  // Se recebemos externalLocation, não consideramos o loading/error do internal hook
+  const locationLoading = externalLocation ? false : internal.loading;
+  const locationError = externalLocation ? null : internal.error;
+
+  // Chama o hook de previsão meteorológica com as coords (em ambos os modos)
+  // O hook original deve lidar com lat/lon válidos; o internal tem fallback para Portugal
   const {
     forecast,
     loading: weatherLoading,
@@ -60,7 +70,6 @@ export default function DisplayLocalizacao() {
   // --- Ecrã Principal (Layout com CSS) ---
   return (
     <div className="weather-widget-container weather-widget-font">
-      
       {/* Título Principal */}
       <div className="weather-widget-header">
         <h1 className="weather-widget-title">Localização</h1>
@@ -72,11 +81,9 @@ export default function DisplayLocalizacao() {
 
       {/* Container de conteúdo principal (Cartão) */}
       <div className="weather-widget-card">
-        
         {/* Meteorologia Atual (Centralizada) */}
         {forecast?.current ? (
           <div className="weather-widget-current">
-            
             {/* Ícone e Temperatura Atual */}
             <div className="weather-widget-current-main">
               <i
@@ -115,7 +122,6 @@ export default function DisplayLocalizacao() {
             <div className="weather-widget-forecast-grid">
               {forecast.daily.map((day, index) => (
                 <div key={day.dt} className="weather-widget-forecast-day">
-                  
                   {/* Nome do Dia */}
                   <p className="weather-widget-forecast-day-name">
                     {index === 0
