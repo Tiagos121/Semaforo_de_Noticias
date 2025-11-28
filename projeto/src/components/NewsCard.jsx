@@ -27,7 +27,8 @@ export default function NewsCard({ noticia, isFavorito, toggleFavorito}) {
 
   return (
     <div
-      key={noticia.id || noticia.url} // Usar ID ou URL como key
+      // 🚨 CORREÇÃO: A propriedade 'key' foi removida.
+      // A key deve ser fornecida pelo componente pai (Home.jsx) no map.
       className="news-card" // 🔄 Classe principal do card
     >
       {/* Imagem */}

@@ -1,47 +1,40 @@
 // src/components/tempo_local/DisplayLocalizacao.jsx
-import React from "react";
+import React, { useState, useEffect } from "react";
+import UnifiedNewsFetcher from "../UnifiedNewsFetcher";
 import {
   useLocationData,
   useWeatherForecast,
   timestampToDate,
   getIconUrl,
-} from "../../hooks/useWeatherAndLocation";
+} from "../../hooks/useWeatherAndLocation"; 
 
-// Importar o nosso novo ficheiro CSS (mantém o teu estilo original)
 import "./DisplayLocalizacaoStyles.css";
 
-// Componente de Ícone (Font Awesome)
 const MapPinIcon = ({ className }) => (
   <i className={`fas fa-map-marker-alt ${className}`}></i>
 );
 
 // ====================================================================
-// COMPONENTE: Localização + Meteorologia Atual + Previsão Semanal
-// - Suporta 2 modos:
-//   1) Autónomo: sem prop "location" -> usa useLocationData() internamente (modo Home)
-//   2) Controlado: recebe prop "location" -> usa essa location e não corre o hook interno (modo NoticiasLocais)
+// COMPONENTE: Localização + Meteorologia
 // ====================================================================
 export default function DisplayLocalizacao({ location: externalLocation }) {
-  // Hook interno (usado apenas se não houver externalLocation)
-  const internal = useLocationData();
+  
+  // 1. Otimização: Chama o hook incondicionalmente, mas a otimização de API está no hook.
+  const internalResult = useLocationData();
+  
+  // 2. Determinação do Estado Final
+  const location = externalLocation || internalResult.location;
+  const locationLoading = externalLocation ? false : internalResult.loading;
+  const locationError = externalLocation ? null : internalResult.error;
 
-  // Decide qual location usar (prop ganha prioridade)
-  const location = externalLocation || internal.location;
-
-  // Se recebemos externalLocation, não consideramos o loading/error do internal hook
-  const locationLoading = externalLocation ? false : internal.loading;
-  const locationError = externalLocation ? null : internal.error;
-
-  // Chama o hook de previsão meteorológica com as coords (em ambos os modos)
-  // O hook original deve lidar com lat/lon válidos; o internal tem fallback para Portugal
-  const {
-    forecast,
-    loading: weatherLoading,
-    error: weatherError,
-  } = useWeatherForecast(location.lat, location.lon);
+  // 3. Chamada ao Hook de Meteorologia (Acesso Seguro)
+  const { forecast, loading: weatherLoading, error: weatherError } = useWeatherForecast(
+    location?.lat,
+    location?.lon
+  );
 
   const totalLoading = locationLoading || weatherLoading;
-  const currentCity = location.city || "Localização atual";
+  const currentCity = location?.city || "Localização atual";
 
   // --- Ecrã de Loading ---
   if (totalLoading)
@@ -66,8 +59,8 @@ export default function DisplayLocalizacao({ location: externalLocation }) {
         </div>
       </div>
     );
-
-  // --- Ecrã Principal (Layout com CSS) ---
+    
+  // --- Ecrã Principal (Layout Original) ---
   return (
     <div className="weather-widget-container weather-widget-font">
       {/* Título Principal */}
@@ -76,6 +69,7 @@ export default function DisplayLocalizacao({ location: externalLocation }) {
         <p className="weather-widget-location">
           <MapPinIcon className="weather-widget-location-icon" />
           {currentCity}
+          {location?.isFallback && <span className="weather-widget-fallback-tag"> (Nacional)</span>}
         </p>
       </div>
 
@@ -153,7 +147,101 @@ export default function DisplayLocalizacao({ location: externalLocation }) {
             Sem previsão semanal disponível.
           </p>
         )}
+
+        {/* --- Seção de Notícias --- */}
+        <div className="weather-widget-news">
+          <h2 className="weather-widget-news-title">Notícias</h2>
+          <div className="weather-widget-news-content">
+            <NewsSection locationData={location} />
+          </div>
+        </div>
       </div>
     </div>
+  );
+}
+
+// ====================================================================
+// COMPONENTE: Seção de Notícias (Fallback com UnifiedNewsFetcher)
+// ====================================================================
+function NewsSection({ locationData }) {
+  const [searchLevel, setSearchLevel] = useState(0); // nível atual do fallback
+  const [currentTerm, setCurrentTerm] = useState("");
+  const [lastUsedLevel, setLastUsedLevel] = useState(""); // para mostrar "Resultados de: ..."
+
+  // Definir a ordem de fallback
+  const levels = [
+    { key: "freguesia", name: locationData.freguesia },
+    { key: "concelho", name: locationData.concelho },
+    { key: "distrito", name: locationData.distrito },
+    { key: "area_metropolitana", name: locationData.area_metropolitana },
+    { key: "pais", name: locationData.pais },
+  ].filter((l) => l.name);
+
+  useEffect(() => {
+    if (levels.length > 0) {
+      setCurrentTerm(levels[0].name);
+      setSearchLevel(0);
+      setLastUsedLevel(levels[0].key);
+    }
+  }, [locationData, levels]);
+
+  const handleRender = (feed, loading, error) => {
+    if (loading) return <p>Carregando notícias...</p>;
+    if (error) return <p>Erro: {error}</p>;
+
+    // Se não houver notícias e ainda houver níveis acima
+    if ((!feed || feed.length === 0) && searchLevel < levels.length - 1) {
+      const nextLevel = searchLevel + 1;
+      setSearchLevel(nextLevel);
+      setCurrentTerm(levels[nextLevel].name);
+      setLastUsedLevel(levels[nextLevel].key);
+      return <p>Procurando notícias mais gerais...</p>;
+    }
+
+    if (!feed || feed.length === 0) {
+      return (
+        <p>
+          Nenhuma notícia encontrada. Tente ser mais genérico na sua pesquisa.
+        </p>
+      );
+    }
+
+    // Notícias encontradas
+    return (
+      <div>
+        <p>
+          Resultados de:{" "}
+          <strong>
+            {lastUsedLevel === "freguesia"
+              ? locationData.freguesia
+              : lastUsedLevel === "concelho"
+              ? locationData.concelho
+              : lastUsedLevel === "distrito"
+              ? locationData.distrito
+              : lastUsedLevel === "area_metropolitana"
+              ? locationData.area_metropolitana
+              : locationData.pais}
+          </strong>
+        </p>
+        <div className="news-grid">
+          {feed.map((art) => (
+            <div key={art.id} className="news-card">
+              <img src={art.image} alt={art.title} />
+              <h3>{art.title}</h3>
+              <p>{art.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  if (!currentTerm) return <p>Carregando localização...</p>;
+
+  return (
+    <UnifiedNewsFetcher
+      searchTerm={currentTerm}
+      render={(feed, loading, error) => handleRender(feed, loading, error)}
+    />
   );
 }

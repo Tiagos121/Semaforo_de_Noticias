@@ -2,11 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import BiasSpectrum from './BiasSpectrum'; 
 
-// Variáveis da API Gemini (Movidas para aqui)
+// Variáveis da API Gemini
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 const MODEL_API_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent";
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos de cache
+  
+// 🟢 CORREÇÃO: Cache aumentada para 24 horas (para evitar o Erro 429)
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; 
 
 // DADOS DE VIÉS PADRÃO (Fallback se a API falhar)
 const DEFAULT_FALLBACK_VIES = {
@@ -21,7 +23,7 @@ const DEFAULT_FALLBACK_VIES = {
 
 
 // ------------------------
-//     FUNÇÕES AUXILIARES DE CACHE
+//     FUNÇÕES AUXILIARES DE CACHE (sem alterações na lógica)
 // ------------------------
 function cacheGetLocal(key) {
     try {
@@ -54,10 +56,9 @@ function safeBase64(str) {
 }
 
 // ------------------------
-//     FUNÇÃO DE ANÁLISE DE VIÉS (A lógica da Gemini centralizada)
+//     FUNÇÃO DE ANÁLISE DE VIÉS 
 // ------------------------
 async function analisarVies(titulo, descricao) {
-  // Cria uma chave de cache única para esta notícia (usando base64 para segurança/unicidade)
   const base = titulo.substring(0, 50) + descricao.substring(0, 50);
   const cacheKey = `vies_${safeBase64(base)}`;
   const cached = cacheGetLocal(cacheKey);
@@ -95,6 +96,10 @@ async function analisarVies(titulo, descricao) {
       }),
     });
 
+    if (res.status === 429) {
+        console.error("ERRO 429: Rate limit da Gemini atingido. Devolvendo fallback.");
+        return DEFAULT_FALLBACK_VIES;
+    }
     if (!res.ok) return DEFAULT_FALLBACK_VIES;
 
     const data = await res.json();
@@ -118,12 +123,10 @@ async function analisarVies(titulo, descricao) {
 //     COMPONENTE WRAPPER
 // ------------------------
 export default function BiasAnalyzer({ titulo, description, existingDetails }) {
-    // Se já existirem detalhes (ex: notícias guardadas), usa-os.
     const [detalhes, setDetalhes] = useState(existingDetails || null);
     const [loading, setLoading] = useState(!existingDetails);
 
     useEffect(() => {
-        // Se já tem detalhes, não faz nada
         if (existingDetails) {
             setLoading(false);
             return;
@@ -131,7 +134,6 @@ export default function BiasAnalyzer({ titulo, description, existingDetails }) {
         
         async function runAnalysis() {
             setLoading(true);
-            // Executa a análise real para todas as notícias novas (Home e Locais)
             const result = await analisarVies(titulo, description);
             setDetalhes(result);
             setLoading(false);
@@ -139,19 +141,15 @@ export default function BiasAnalyzer({ titulo, description, existingDetails }) {
 
         runAnalysis();
 
-    // A dependência é importante para reanalisar se a notícia for alterada, 
-    // mas essencialmente para garantir que roda uma vez por artigo novo.
     }, [titulo, description, existingDetails]); 
 
     if (loading) {
-        // Placeholder visível enquanto a API está a trabalhar
         return <div style={{ height: 35, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#6b7280', borderTop: '1px solid #f3f4f6', paddingTop: 10, marginTop: 10 }}>A analisar viés...</div>;
     }
 
     const finalDetalhes = detalhes || DEFAULT_FALLBACK_VIES;
     const scores = finalDetalhes.scores_ideologicos || [];
 
-    // Renderiza o componente visual
     return (
         <BiasSpectrum
           scores={scores}
