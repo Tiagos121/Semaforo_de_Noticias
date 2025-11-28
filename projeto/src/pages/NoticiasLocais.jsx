@@ -1,5 +1,5 @@
 // src/pages/NoticiasLocais.jsx
-import React, { useContext } from "react";
+import React, { useContext, useState, useEffect } from "react"; // Adicionado useState, useEffect
 import { AuthContext } from "../context/AuthContextValue";
 import { useFavoritos } from "../hooks/useFavoritos";
 import { adicionarFavorito, removerFavorito } from "../firebase/favoritos";
@@ -14,14 +14,47 @@ import { useLocationData } from "../hooks/useLocationData";
 
 // Constantes
 const MAX_NEWS_LOCAL_DISPLAY = 8; 
+const INITIAL_QUERY_TERMS = ['notícias', 'acontecimentos', 'portugal']; // Termo genérico de fallback inicial
 
 export default function NoticiasLocais() {
   const { user } = useContext(AuthContext);
   const favoritos = useFavoritos();
 
-  // 1. OBTENÇÃO DA LOCALIZAÇÃO (Chamado apenas UMA vez)
+  // 1. OBTENÇÃO DA LOCALIZAÇÃO (O ÚNICO LUGAR A CHAMAR useLocationData)
   const { location, loading: locationLoading, error: locationError } = useLocationData();
   
+  // 2. LÓGICA DE FALLBACK DE PESQUISA POR NÍVEL (Novo Estado)
+  const [queryTerms, setQueryTerms] = useState(INITIAL_QUERY_TERMS);
+  const [cityName, setCityName] = useState("Portugal"); // Estado para o nome da cidade
+
+  useEffect(() => {
+    if (!locationLoading && location) {
+      // Define a ordem de fallback de termos para as notícias
+      // Prioriza a cidade, depois concelho, distrito, etc.
+      const terms = [
+        location.city,
+        location.concelho,
+        location.distrito,
+        location.pais,
+      ]
+      .filter(name => name) // Remove nulos/vazios
+      .filter((value, index, self) => self.indexOf(value) === index); // Deduplicação
+
+      // Cria a lista de termos de pesquisa. Ex: ["notícias Aveiro", "acontecimentos Aveiro", ...]
+      const newTerms = terms.flatMap(term => [`notícias ${term}`, `acontecimentos ${term}`]);
+      
+      // Adiciona o termo inicial como fallback
+      if (newTerms.length === 0) newTerms.push(...INITIAL_QUERY_TERMS);
+
+      setQueryTerms(newTerms);
+      setCityName(location.city || "Portugal");
+
+    } else if (!locationLoading && locationError) {
+      setCityName("Local"); // Caso de erro, mas mantém a query de fallback
+    }
+  }, [location, locationLoading, locationError]);
+
+
   // Funções de Favoritos (Omitidas para brevidade)
   const isFavorito = (url) => favoritos.some((f) => f.url === url);
 
@@ -57,7 +90,7 @@ export default function NoticiasLocais() {
   };
 
 
-  // 2. LÓGICA DE CARREGAMENTO INICIAL DA LOCALIZAÇÃO
+  // 3. LÓGICA DE CARREGAMENTO INICIAL DA LOCALIZAÇÃO (Simplificada)
   if (locationLoading) {
     return (
       <div className="page-container" style={{ padding: 20 }}>
@@ -68,16 +101,17 @@ export default function NoticiasLocais() {
     );
   }
   
-  // Usamos o nome da cidade JÁ LIMPO pelo hook useLocationData
-  const cityName = location?.city || "Portugal";
-  const queryTermosLocais = [`notícias ${cityName}`, `acontecimentos ${cityName}`];
-
+  // O queryTerms já é determinado no useEffect.
   
   return (
     <div className="page-container" style={{ padding: 20 }}>
-      {/* 3. DISPLAY DE LOCALIZAÇÃO (Componente Controlado) */}
+      {/* 4. DISPLAY DE LOCALIZAÇÃO (Componente Controlado - Passa os dados como prop) */}
       <div style={{ marginBottom: 16 }}>
-        <DisplayLocalizacao location={location} /> 
+        <DisplayLocalizacao 
+          location={location} 
+          locationLoading={locationLoading} 
+          locationError={locationError} 
+        /> 
       </div>
 
       <div style={{backgroundColor: "#9ca3af", padding: "25px", marginBottom: 20, borderRadius:"40px"}}>
@@ -94,9 +128,9 @@ export default function NoticiasLocais() {
       )}
 
 
-      {/* 4. CHAMA O UNIFIEDNEWSFETCHER */}
+      {/* 5. CHAMA O UNIFIEDNEWSFETCHER (Agora usa os queryTerms gerados) */}
       <UnifiedNewsFetcher 
-          terms={queryTermosLocais} 
+          terms={queryTerms} // Termos de pesquisa ajustados
           target={MAX_NEWS_LOCAL_DISPLAY}    
           render={(feed, loading, error) => (
             <>
