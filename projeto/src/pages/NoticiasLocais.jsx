@@ -83,9 +83,7 @@ export default function NoticiasLocais() {
   }
   
   // Variável para a descrição
-  const searchLevelDescription = currentLevel 
-    ? `(A pesquisar por: ${cityName} - Nível: ${currentLevel.toUpperCase()})` 
-    : `(A pesquisar por: ${cityName})`;
+  const searchLevelDescription = currentLevel ? `(A pesquisar por: ${cityName} - Nível: ${currentLevel.toUpperCase()})` : `(A pesquisar por: ${cityName})`;
   
   return (
     <div className="page-container" style={{ padding: 20 }}>
@@ -95,7 +93,7 @@ export default function NoticiasLocais() {
         <h1 style={{ fontSize: 28, marginBottom: 8, color: "white"}}>📍Notícias Locais ({cityName})</h1>
         {/* 5. ALTERAÇÃO AQUI: Adicionar o nível de pesquisa no subtítulo */}
         <p style={{ color: "white", marginBottom: 0 }}>
-          Notícias da sua área de {cityName} com análise de viés. {searchLevelDescription}
+          Notícias mais proximas de {cityName} com análise de viés. {searchLevelDescription}
         </p>
       </div>
       
@@ -173,8 +171,7 @@ export default function NoticiasLocais() {
               {!loading && feed.length === 0 && (
                 <div style={{ marginTop: 18 }}>
                   <p className="placeholder">
-                    Nenhuma notícia local encontrada para {cityName}. 
-                    Tente ser mais genérico na sua pesquisa.
+                    Nenhuma notícia local encontrada para {cityName}. Tente novamente mais tarde.
                   </p>
                 </div>
               )}
