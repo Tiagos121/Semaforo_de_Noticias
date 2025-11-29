@@ -21,3 +21,4 @@ export async function buscarFavoritos(userId) {
 
   return snap.docs.map((d) => d.data());
 }
+
