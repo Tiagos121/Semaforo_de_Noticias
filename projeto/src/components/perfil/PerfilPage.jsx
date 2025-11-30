@@ -1,81 +1,83 @@
-import { useState } from "react";
-import { auth, provider } from "../../firebase/firebaseConfig";
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signInWithPopup,
-} from "firebase/auth";
+// PerfilPage.jsx - Componente de Perfil do Usuário
 
-export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isRegister, setIsRegister] = useState(false);
+import { useAuth } from "../../context/useAuth";
+import { db } from "../../firebase/firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
+import './AuthStyles.css'
 
-  const handleEmailAuth = async () => {
-    try {
-      if (isRegister) {
-        await createUserWithEmailAndPassword(auth, email, password);
-        alert("Conta criada com sucesso!");
-      } else {
-        await signInWithEmailAndPassword(auth, email, password);
+export default function PerfilPage() {
+  const { user, logout, loading } = useAuth();
+  const [savedCount, setSavedCount] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+
+    async function loadSavedNews() {
+      const ref = doc(db, "users", user.uid);
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        const data = snap.data();
+        setSavedCount(data.savedNews?.length || 0);
       }
-    } catch (error) {
-      alert("Erro: " + error.message);
     }
-  };
+    loadSavedNews();
+  }, [user]);
 
-  const handleGoogleLogin = async () => {
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      alert("Erro Google: " + error.message);
-    }
-  };
+  // Aguarda que o AuthContext termine de verificar o estado de autenticação
+  // 1. Verificação de Carregamento
+  if (loading) {
+    return <p className="text-center text-lg text-gray-600 mt-20">A carregar dados do perfil...</p>;
+  }
+
+  // 2. Verificação de Redirecionamento
+  if (!user) {
+    return <Navigate to="/login" replace />; 
+  }
 
   return (
-    <div className="flex flex-col items-center mt-10 gap-4">
-      <h1 className="text-2xl font-bold">
-        {isRegister ? "Criar Conta" : "Login"}
-      </h1>
+    // Wrapper: Centraliza o cartão vertical e horizontalmente
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      
+      {/* Cartão de Perfil: auth-card garante o estilo e flex-col items-center centra tudo internamente */}
+      <div className="auth-card flex flex-col items-center gap-2">
+        
+        {/* 🛑 NOVO: Usa a classe CSS .profile-header para centrar o bloco */}
+      <div className="profile-header">
+          <img 
+              src={user.photoURL || 'https://via.placeholder.com/128?text=P'} 
+              alt="foto de perfil"
+              className="profile-image" // ✅ USA A CLASSE CSS .profile-image
+          />
+          <h1 className="text-3xl font-extrabold text-gray-900 mt-4 text-center pt-5">
+              {user.displayName || user.email.split('@')[0]}
+          </h1>
+      </div>
+        
+        <div className="profile-section border-b-0 pb-0">
 
-      <input
-        className="border px-3 py-2 rounded w-80"
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
+        </div>
+        {/* Secção de Detalhes: Email */}
+        <div className="profile-section">
+            <span className="text-gray-500 font-semibold">Email</span>
+            <span className="text-gray-700 font-medium">{user.email}</span>
+        </div>
+        
+        {/* Secção de Detalhes: Notícias Guardadas */}
+        <div className="profile-section border-b-0 pb-0">
+            <span className="text-gray-500 font-semibold">Notícias Guardadas</span>
+            <span className="text-blue-600 font-bold text-xl">{savedCount} ⭐</span>
+        </div>
 
-      <input
-        className="border px-3 py-2 rounded w-80"
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-
-      <button
-        className="bg-blue-500 text-white px-4 py-2 rounded w-80"
-        onClick={handleEmailAuth}
-      >
-        {isRegister ? "Criar conta" : "Entrar"}
-      </button>
-
-      <button
-        className="bg-red-500 text-white px-4 py-2 rounded w-80"
-        onClick={handleGoogleLogin}
-      >
-        Entrar com Google
-      </button>
-
-      <p
-        className="text-blue-600 cursor-pointer"
-        onClick={() => setIsRegister(!isRegister)}
-      >
-        {isRegister
-          ? "Já tens conta? Faz login"
-          : "Não tens conta? Regista-te"}
-      </p>
+        {/* Botão de Logout (usa a classe CSS personalizada) */}
+        <button
+          className="logout-button w-full mt-8"
+          onClick={logout}
+        >
+          Terminar Sessão
+        </button>
+      </div>
     </div>
   );
 }

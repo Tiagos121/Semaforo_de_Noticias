@@ -10,6 +10,38 @@ const MODEL_API_URL =
 // 🟢 CORREÇÃO: Cache aumentada para 24 horas (para evitar o Erro 429)
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; 
 
+// 🟢 SISTEMA DE FILA: Limita requisições simultâneas para evitar rate limit
+const MAX_CONCURRENT_REQUESTS = 3;
+let activeRequests = 0;
+const requestQueue = [];
+
+async function processQueue() {
+  if (activeRequests >= MAX_CONCURRENT_REQUESTS || requestQueue.length === 0) {
+    return;
+  }
+
+  const { resolve, reject, task } = requestQueue.shift();
+  activeRequests++;
+
+  try {
+    const result = await task();
+    resolve(result);
+  } catch (error) {
+    reject(error);
+  } finally {
+    activeRequests--;
+    // Processa próximo item na fila após um pequeno delay
+    setTimeout(() => processQueue(), 500);
+  }
+}
+
+async function queueRequest(task) {
+  return new Promise((resolve, reject) => {
+    requestQueue.push({ resolve, reject, task });
+    processQueue();
+  });
+}
+
 // DADOS DE VIÉS PADRÃO (Fallback se a API falhar)
 const DEFAULT_FALLBACK_VIES = {
   opinativo: 0,
@@ -88,16 +120,19 @@ async function analisarVies(titulo, descricao) {
   `;
 
   try {
-    const res = await fetch(`${MODEL_API_URL}?key=${GEMINI_API_KEY}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-      }),
+    // Usa a fila para limitar requisições simultâneas
+    const res = await queueRequest(async () => {
+      return fetch(`${MODEL_API_URL}?key=${GEMINI_API_KEY}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+        }),
+      });
     });
 
     if (res.status === 429) {
-        console.error("ERRO 429: Rate limit da Gemini atingido. Devolvendo fallback.");
+        // Silencioso: apenas retorna fallback sem poluir o console
         return DEFAULT_FALLBACK_VIES;
     }
     if (!res.ok) return DEFAULT_FALLBACK_VIES;

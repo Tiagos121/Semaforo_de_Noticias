@@ -7,9 +7,6 @@ import "../styles/global.css";
 export default function Navbar() {
   const { user } = useAuth();
 
-  // 🛑 LOG 2: O que o Navbar vê
-  console.log("LOG 2 (NAVBAR): User no render ->", user ? "Autenticado" : "Não Autenticado");
-
   return (
     <nav className="navbar">
       <div className="navbar-left">

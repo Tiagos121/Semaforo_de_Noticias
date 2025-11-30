@@ -8,6 +8,8 @@ import {
 import { setDoc, doc, getDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
+import googleIconUrl from '../../assets/logo_google.png';
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -58,49 +60,73 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-col items-center mt-10 gap-4">
-      <h1 className="text-2xl font-bold">
-        {isRegister ? "Criar Conta" : "Entrar"}
-      </h1>
+    // Wrapper: min-h-screen flex items-center justify-center
+    <div className="flex items-center justify-center bg-gray-50 p-4">
+      
+      {/* 💡 Cartão de Autenticação (auth-card) */}
+      <div className="auth-card flex flex-col items-center">
+        
+        <h1 className="auth-title">
+          {isRegister ? "Criar Sua Conta" : "Log In"}
+        </h1>
 
-      <input
-        className="border px-3 py-2 rounded w-80"
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
+        {/* 🛑 Estrutura do Formulário Simplificada */}
+        <div className="w-full">
+            <input
+                className="input-field rounded-lg w-full"
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+            />
 
-      <input
-        className="border px-3 py-2 rounded w-80"
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+            <input
+                className="input-field rounded-lg w-full"
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+            />
+        </div>
+        
+        {/* Botão principal (Entrar/Registar) */}
+        <button
+          className="primary-button" // Usando a nova classe CSS pura
+          onClick={handleEmailAuth}
+        >
+          {isRegister ? "Registar Agora" : "Entrar"}
+        </button>
 
+        {/* Linha Divisória */}
+        <div className="divider-line"> {/* Usando a nova classe para estilizar */}
+            <hr />
+            <span>OU</span>
+            <hr />
+        </div>
+
+        {/* Botão Google */}
       <button
-        className="bg-blue-500 text-white px-4 py-2 rounded w-80"
-        onClick={handleEmailAuth}
-      >
-        {isRegister ? "Criar conta" : "Entrar"}
-      </button>
-
-      <button
-        className="bg-red-500 text-white px-4 py-2 rounded w-80"
-        onClick={handleGoogleLogin}
-      >
-        Entrar com Google
-      </button>
-
-      <p
-        className="text-blue-600 cursor-pointer"
-        onClick={() => setIsRegister(!isRegister)}
-      >
-        {isRegister
-          ? "Já tens conta? Faz login"
-          : "Não tens conta? Regista-te"}
-      </p>
+            className="google-button" // Usando a classe CSS pura para centralização e estilo
+            onClick={handleGoogleLogin}
+        >
+            <img 
+                src={googleIconUrl}
+                alt="Google Icon"
+                className="google-icon"
+            />
+            
+            Continuar com Google
+        </button>
+        
+        <p
+          className="auth-toggle-link" // Usando a nova classe
+          onClick={() => setIsRegister(!isRegister)}
+        >
+          {isRegister
+            ? "Já tens conta? Faz login aqui."
+            : "Não tens conta? Regista-te agora."}
+        </p>
+      </div>
     </div>
-  );
+);
 }

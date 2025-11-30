@@ -7,23 +7,27 @@ import { signOut, onAuthStateChanged } from "firebase/auth";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); 
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
-      // Remover logs para evitar confusão de Strict Mode
       setUser(u);
-      setLoading(false); 
+      setLoading(false);
     });
     return () => unsub();
   }, []);
 
-  const logout = () => signOut(auth);
+  if (loading) {
+    return (
+      <div style={{ padding: 20, textAlign: "center" }}>
+        A carregar sessão...
+      </div>
+    );
+  }
 
-  // 🛑 CORRIGIDO: O AuthContext APENAS fornece o valor, não bloqueia.
   return (
-    <AuthContext.Provider value={{ user, logout, loading }}>
-      {children} 
+    <AuthContext.Provider value={{ user, loading, logout: () => signOut(auth) }}>
+      {children}
     </AuthContext.Provider>
   );
 }

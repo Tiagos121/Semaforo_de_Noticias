@@ -1,0 +1,129 @@
+/* --- Estilo Base (Para ser mais bonito e espaçado) --- */
+
+
+/* Estilo para o Wrapper Principal (O Cartão) */
+.auth-card {
+    margin: 0 auto;
+    margin-top: 25px;
+    background: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    max-width: 400px; 
+    width: 100%;
+}
+
+/* Título */
+.auth-title {
+    font-size: 2rem; /* Aumenta o tamanho do título */
+    font-weight: 800; /* Mais Bold */
+    margin-bottom: 25px; /* Mais espaço após o título */
+    width: 100%;
+    text-align: center; /* Alinha o "Bem-vindo" à esquerda, como no screenshot original */
+}
+
+/* --- Estilos de Componentes --- */
+
+/* 1. INPUTS */
+.input-field {
+    transition: all 0.2s ease;
+    border-color: #d1d5db;
+    padding: 12px;
+    margin-bottom: 15px;
+    width: 100%;
+    box-sizing: border-box; 
+    border: 1px solid #d1d5db; 
+    border-radius: 8px; /* Borda mais suave */
+}
+
+/* 2. BOTÃO PRINCIPAL (Azul) - Renomeado para .primary-button */
+.primary-button {
+    background-color: #2563eb;
+    color: white;
+    font-weight: 600;
+    padding: 14px 16px; /* Aumenta um pouco o padding vertical */
+    border-radius: 8px;
+    width: 100%;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3); /* Sombra para o botão azul */
+    margin-top: 10px; 
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.primary-button:hover {
+    background-color: #1d4ed8; /* Azul escuro no hover */
+    transform: scale(1.01);
+}
+
+/* 3. DIVISÓRIA 'OU' */
+.divider-line {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    margin: 25px 0 15px 0; /* Mais espaço acima da linha */
+}
+
+.divider-line hr {
+    flex-grow: 1;
+    border-color: #e5e7eb; /* cor da borda cinzenta */
+}
+
+.divider-line span {
+    padding: 0 12px;
+    color: #9ca3af; /* Cor cinza para o texto 'OU' */
+    font-size: 0.75rem; /* Texto mais pequeno */
+    font-weight: 500;
+    letter-spacing: 0.05em; /* Espaçamento entre letras */
+}
+
+/* 4. BOTÃO GOOGLE */
+/* Mantido como antes, mas com layout flex para centralização */
+.google-button {
+    background: white;
+    border: 1px solid #d1d5db;
+    color: #374151;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    transition: background 0.15s ease, transform 0.15s ease;
+
+    /* Layout para centralização (Substitui as classes flex do JSX) */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 24px;
+    width: 100%;
+    gap: 12px;
+    font-size: 1rem;
+    
+    margin-bottom: 15px; /* Espaçamento abaixo do botão */
+}
+
+.google-button:hover {
+    background: #f9fafb;
+    transform: scale(1.01);
+}
+
+.google-icon {
+    width: 24px !important;
+    height: 24px !important;
+    object-fit: contain;
+}
+
+/* Link de Troca (Não tens conta?) */
+.auth-toggle-link {
+    text-align: center;
+    width: 100%;
+    margin-top: 15px; /* Mais espaço para o link */
+    color: #6b7280;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.auth-toggle-link:hover {
+    color: #2563eb;
+    text-decoration: underline;
+}
