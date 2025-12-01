@@ -4,16 +4,21 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
+  fetchSignInMethodsForEmail,
+  updateProfile,
 } from "firebase/auth";
 import { setDoc, doc, getDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+import './AuthStyles.css'
 
 import googleIconUrl from '../../assets/logo_google.png';
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [isRegister, setIsRegister] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(""); // 💡 NOVO: Estado para a mensagem de erro
 
   const navigate = useNavigate();
 
@@ -31,31 +36,61 @@ export default function LoginPage() {
     }
   };
 
+  // 💡 FUNÇÃO DE VALIDAÇÃO DE CAMPOS ATUALIZADA
+  const validateFields = () => {
+    if (!email || !password || (isRegister && !name)) {
+      setErrorMessage("Por favor, preencha todos os campos obrigatórios.");
+      return false;
+    }
+    setErrorMessage(""); // Limpa a mensagem se a validação passar
+    return true;
+  };
+
   const handleEmailAuth = async () => {
+    if (!validateFields()) return;
+
     try {
       let result;
 
       if (isRegister) {
+        // VALIDAÇÃO DE EXISTÊNCIA DE EMAIL
+        const methods = await fetchSignInMethodsForEmail(auth, email);
+        if (methods.length > 0) {
+          setErrorMessage("Já existe um utilizador registado com este email.");
+          return;
+        }
+
+        // Cria o utilizador
         result = await createUserWithEmailAndPassword(auth, email, password);
+        
+        // Adiciona o nome de exibição ao perfil do Firebase Auth
+        await updateProfile(result.user, { displayName: name });
+        
         await ensureUserInFirestore(result.user.uid, email);
-        alert("Conta criada com sucesso!");
+        setErrorMessage(""); // Limpa o erro após sucesso
+        // alert("Conta criada com sucesso!"); // Substituído por navegação direta ou mensagem de sucesso no futuro
+        
       } else {
+        // LOGIN
         result = await signInWithEmailAndPassword(auth, email, password);
       }
 
       navigate("/");
     } catch (error) {
-      alert("Erro: " + error.message);
+      // 🛑 Atualiza o estado da mensagem de erro em vez do alert
+      setErrorMessage("Erro: " + error.message);
     }
   };
 
   const handleGoogleLogin = async () => {
     try {
+      setErrorMessage(""); // Limpa erros anteriores
       const result = await signInWithPopup(auth, provider);
       await ensureUserInFirestore(result.user.uid, result.user.email);
       navigate("/");
     } catch (error) {
-      alert("Erro Google: " + error.message);
+      // 🛑 Atualiza o estado da mensagem de erro em caso de falha no Google
+      setErrorMessage("Erro Google: " + error.message);
     }
   };
 
@@ -67,11 +102,23 @@ export default function LoginPage() {
       <div className="auth-card flex flex-col items-center">
         
         <h1 className="auth-title">
-          {isRegister ? "Criar Sua Conta" : "Log In"}
+          {isRegister ? "Registo" : "Log In"}
         </h1>
 
-        {/* 🛑 Estrutura do Formulário Simplificada */}
+        {/* 🛑 ESTRUTURA DO FORMULÁRIO */}
         <div className="w-full">
+            
+            {/* Campo Nome (apenas para registo) */}
+            {isRegister && (
+                <input
+                    className="input-field rounded-lg w-full"
+                    type="text"
+                    placeholder="Nome"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                />
+            )}
+
             <input
                 className="input-field rounded-lg w-full"
                 type="email"
@@ -88,25 +135,32 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
             />
         </div>
+
+        {/* 🛑 MENSAGEM DE ERRO (HTML) */}
+        {errorMessage && (
+            <p className="error-message">
+                {errorMessage}
+            </p>
+        )}
         
         {/* Botão principal (Entrar/Registar) */}
         <button
-          className="primary-button" // Usando a nova classe CSS pura
+          className="primary-button" 
           onClick={handleEmailAuth}
         >
           {isRegister ? "Registar Agora" : "Entrar"}
         </button>
 
         {/* Linha Divisória */}
-        <div className="divider-line"> {/* Usando a nova classe para estilizar */}
+        <div className="divider-line"> 
             <hr />
             <span>OU</span>
             <hr />
         </div>
 
         {/* Botão Google */}
-      <button
-            className="google-button" // Usando a classe CSS pura para centralização e estilo
+        <button
+            className="google-button" 
             onClick={handleGoogleLogin}
         >
             <img 
@@ -119,8 +173,14 @@ export default function LoginPage() {
         </button>
         
         <p
-          className="auth-toggle-link" // Usando a nova classe
-          onClick={() => setIsRegister(!isRegister)}
+          className="auth-toggle-link" 
+          onClick={() => {
+            setIsRegister(!isRegister);
+            setEmail("");
+            setPassword("");
+            setName(""); 
+            setErrorMessage(""); // Limpa a mensagem ao alternar
+          }}
         >
           {isRegister
             ? "Já tens conta? Faz login aqui."
@@ -128,5 +188,5 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
-);
+  );
 }

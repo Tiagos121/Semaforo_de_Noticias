@@ -5,7 +5,7 @@ import { db } from "../../firebase/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import './AuthStyles.css'
+import './PerfilPageStyles.css'
 
 export default function PerfilPage() {
   const { user, logout, loading } = useAuth();

@@ -9,7 +9,6 @@ import NoticiasLocais from "./pages/NoticiasLocais";
 import VideosPotentes from "./pages/VideosPotentes";
 import PerfilPage from "./components/perfil/PerfilPage";
 import LoginPage from "./components/perfil/LoginPage";
-import Logout from "./components/perfil/Logout";
 
 export default function App() {
   return (
@@ -24,7 +23,6 @@ export default function App() {
           <Route path="/videos" element={<VideosPotentes />} />
            <Route path="/login" element={<LoginPage />} />
            <Route path="/perfil" element={<PerfilPage />} />
-          <Route path="/logout" element={<Logout />} />
         </Routes>
         
       </BrowserRouter>
