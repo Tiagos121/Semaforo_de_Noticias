@@ -19,7 +19,7 @@ import UnifiedNewsFetcher from "../components/UnifiedNewsFetcher";
 import defaultImage from "../assets/fundo_sn.png";
 
 // Variáveis
-const MAX_NEWS_DISPLAY = 8;
+const MAX_NEWS_DISPLAY = 4;
 const queryTermoPolitica = "política portuguesa OR governo OR eleições";
 
 

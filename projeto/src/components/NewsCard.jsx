@@ -92,7 +92,7 @@ export default function NewsCard({ noticia, isFavorito, toggleFavorito}) {
             <button
                 onClick={handleToggle} // Chama a função que adiciona/remove
                 title={favorito ? "Remover favorito" : "Guardar favorito"}
-                // 🔄 Aplica a classe is-favorito se estiver guardado
+                // Aplica a classe is-favorito se estiver guardado
                 className={`favorite-toggle-btn ${favorito ? 'is-favorito' : ''}`}
             >
                 <span role="img" aria-label="favorito">
@@ -109,7 +109,7 @@ export default function NewsCard({ noticia, isFavorito, toggleFavorito}) {
           href={noticia.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="news-full-link" // 🔄 Usa a classe para o estilo de opacidade/hover
+          className="news-full-link" // Usa a classe para o estilo de opacidade/hover
         >
           <i className="fas fa-info-circle"></i> Ler notícia completa
         </a>

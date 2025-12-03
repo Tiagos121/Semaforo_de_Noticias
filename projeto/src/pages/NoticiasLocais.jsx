@@ -19,7 +19,7 @@ import { useLocationData } from "../hooks/useLocationData";
 import { useLocalNewsTerms } from "../hooks/useLocalNewsTerms"; // <-- Novo Hook!
 
 // Constantes
-const MAX_NEWS_LOCAL_DISPLAY = 8; 
+const MAX_NEWS_LOCAL_DISPLAY = 4; 
 
 export default function NoticiasLocais() {
   const { user } = useContext(AuthContext);

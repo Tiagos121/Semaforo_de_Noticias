@@ -11,6 +11,9 @@ export default function PerfilPage() {
   const { user, logout, loading } = useAuth();
   const [savedCount, setSavedCount] = useState(0);
 
+  // 🛑 Defina a URL Padrão aqui. Usamos um valor estático, mas o nome real será usado no Registo
+  const DEFAULT_AVATAR_URL = 'https://ui-avatars.com/api/?name=User&background=3B82F6&color=fff&size=128';
+
   useEffect(() => {
     if (!user) return;
 
@@ -45,11 +48,11 @@ export default function PerfilPage() {
         
         {/* 🛑 NOVO: Usa a classe CSS .profile-header para centrar o bloco */}
       <div className="profile-header">
-          <img 
-              src={user.photoURL || 'https://via.placeholder.com/128?text=P'} 
-              alt="foto de perfil"
-              className="profile-image" // ✅ USA A CLASSE CSS .profile-image
-          />
+          <img
+                src={user.photoURL || DEFAULT_AVATAR_URL} 
+                alt="foto de perfil"
+                className="w-32 h-32 rounded-full object-cover ring-4 ring-blue-300 shadow-xl"
+            />
           <h1 className="text-3xl font-extrabold text-gray-900 mt-4 text-center pt-5">
               {user.displayName || user.email.split('@')[0]}
           </h1>
