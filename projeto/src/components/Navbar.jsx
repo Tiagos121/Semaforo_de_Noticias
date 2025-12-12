@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import logo from "../assets/logo_sn.png";
 import "../styles/global.css";
+import AvatarImage from '../components/perfil/AvatarImage'
 
 
 export default function Navbar() {
@@ -21,16 +22,18 @@ export default function Navbar() {
 
       <div className="navbar-right">
         {user ? (
-          // 1. SE O UTILIZADOR EXISTIR, vai para a página /perfil (que contém o Logout.jsx)
           <Link to="/perfil"> 
-            <img
-              src={user.photoURL}
-              alt="perfil"
-              className="perfil-img"
+            
+            <AvatarImage
+              photoURL={user.photoURL}
+              identifier={user.displayName || user.email}
+              // 🛑 APLICAR A CLASSE CSS PURA AQUI:
+              size="w-8 h-8 perfil-img"
+              
             />
+            
           </Link>
         ) : (
-          // 2. SE NÃO EXISTIR, mostra o botão Login
           <Link to="/login" className="login-btn">Login</Link>
         )}
       </div>

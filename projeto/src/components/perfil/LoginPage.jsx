@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { auth, provider, db } from "../../firebase/firebaseConfig";
+import { generateDiceBearAvatarUrl } from './avatarUtils';
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -63,12 +64,13 @@ export default function LoginPage() {
         // Cria o utilizador
         result = await createUserWithEmailAndPassword(auth, email, password);
 
-        const defaultPhotoUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&size=128`;
-        
-        await updateProfile(result.user, { 
-            displayName: name,
-            photoURL: defaultPhotoUrl // AQUI ESTÁ A IMPLEMENTAÇÃO
-        });
+        // 🛑 USO: Chamar a função importada
+          const defaultPhotoUrl = generateDiceBearAvatarUrl(name); 
+            
+            await updateProfile(result.user, { 
+                displayName: name,
+                photoURL: defaultPhotoUrl // Define o URL gerado
+            });
         
         // Adiciona o nome de exibição ao perfil do Firebase Auth
         await updateProfile(result.user, { displayName: name });
