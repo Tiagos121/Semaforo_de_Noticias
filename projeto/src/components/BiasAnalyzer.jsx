@@ -2,23 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import BiasSpectrum from './BiasSpectrum'; 
 
-// Variáveis da API Gemini
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 const MODEL_API_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent";
-  
-// 🟢 CORREÇÃO: Cache aumentada para 24 horas (para evitar o Erro 429)
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000; 
 
-// 🟢 SISTEMA DE FILA: Limita requisições simultâneas para evitar rate limit
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; 
 const MAX_CONCURRENT_REQUESTS = 3;
 let activeRequests = 0;
 const requestQueue = [];
 
 async function processQueue() {
-  if (activeRequests >= MAX_CONCURRENT_REQUESTS || requestQueue.length === 0) {
-    return;
-  }
+  if (activeRequests >= MAX_CONCURRENT_REQUESTS || requestQueue.length === 0) return;
 
   const { resolve, reject, task } = requestQueue.shift();
   activeRequests++;
@@ -30,7 +24,6 @@ async function processQueue() {
     reject(error);
   } finally {
     activeRequests--;
-    // Processa próximo item na fila após um pequeno delay
     setTimeout(() => processQueue(), 500);
   }
 }
@@ -42,7 +35,6 @@ async function queueRequest(task) {
   });
 }
 
-// DADOS DE VIÉS PADRÃO (Fallback se a API falhar)
 const DEFAULT_FALLBACK_VIES = {
   opinativo: 0,
   justificacao: "Sem análise (API offline ou falha)",
@@ -53,51 +45,42 @@ const DEFAULT_FALLBACK_VIES = {
   ],
 };
 
-
-// ------------------------
-//     FUNÇÕES AUXILIARES DE CACHE (sem alterações na lógica)
-// ------------------------
 function cacheGetLocal(key) {
-    try {
-        const raw = localStorage.getItem(key);
-        if (!raw) return null;
-        const parsed = JSON.parse(raw);
-        if (Date.now() - parsed.ts > CACHE_TTL_MS) {
-            localStorage.removeItem(key);
-            return null;
-        }
-        return parsed.value;
-    } catch {
-        return null;
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (Date.now() - parsed.ts > CACHE_TTL_MS) {
+      localStorage.removeItem(key);
+      return null;
     }
+    return parsed.value;
+  } catch {
+    return null;
+  }
 }
 
 function cacheSetLocal(key, value) {
-    try {
-        localStorage.setItem(
-            key,
-            JSON.stringify({ ts: Date.now(), value })
-        );
-    } catch {
-        console.warn("Falha ao escrever no cache local");
-    }
+  try {
+    localStorage.setItem(key, JSON.stringify({ ts: Date.now(), value }));
+  } catch {
+    console.warn("Falha ao escrever no cache local");
+  }
 }
 
 function safeBase64(str) {
   return btoa(unescape(encodeURIComponent(str)));
 }
 
-// ------------------------
-//     FUNÇÃO DE ANÁLISE DE VIÉS 
-// ------------------------
 async function analisarVies(titulo, descricao) {
   const base = titulo.substring(0, 50) + descricao.substring(0, 50);
   const cacheKey = `vies_${safeBase64(base)}`;
   const cached = cacheGetLocal(cacheKey);
   if (cached) return cached;
-  
+
   if (!GEMINI_API_KEY) return DEFAULT_FALLBACK_VIES;
 
+  // 🔹 Mantém exatamente o teu prompt original sem alterações
   const prompt = `
     Analise o texto da notícia a seguir para determinar o seu viés ideológico (Esquerda, Centro, Direita) e a sua percentagem de opinatividade (0% a 100%).
     A soma total dos scores de Esquerda, Centro e Direita deve ser 100.
@@ -120,7 +103,6 @@ async function analisarVies(titulo, descricao) {
   `;
 
   try {
-    // Usa a fila para limitar requisições simultâneas
     const res = await queueRequest(async () => {
       return fetch(`${MODEL_API_URL}?key=${GEMINI_API_KEY}`, {
         method: "POST",
@@ -131,15 +113,11 @@ async function analisarVies(titulo, descricao) {
       });
     });
 
-    if (res.status === 429) {
-        // Silencioso: apenas retorna fallback sem poluir o console
-        return DEFAULT_FALLBACK_VIES;
-    }
+    if (res.status === 429) return DEFAULT_FALLBACK_VIES;
     if (!res.ok) return DEFAULT_FALLBACK_VIES;
 
     const data = await res.json();
     const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
     if (!content) return DEFAULT_FALLBACK_VIES;
 
     const jsonString = content.replace(/```json|```/g, "").trim();
@@ -154,42 +132,37 @@ async function analisarVies(titulo, descricao) {
   }
 }
 
-// ------------------------
-//     COMPONENTE WRAPPER
-// ------------------------
-export default function BiasAnalyzer({ titulo, description, existingDetails }) {
-    const [detalhes, setDetalhes] = useState(existingDetails || null);
-    const [loading, setLoading] = useState(!existingDetails);
+export default function BiasAnalyzer({ titulo, description, existingDetails, onAnalysisComplete }) {
+  const [detalhes, setDetalhes] = useState(
+    existingDetails && Object.keys(existingDetails).length > 0 ? existingDetails : null
+  );
+  const [loading, setLoading] = useState(!detalhes);
 
-    useEffect(() => {
-        if (existingDetails) {
-            setLoading(false);
-            return;
-        }
-        
-        async function runAnalysis() {
-            setLoading(true);
-            const result = await analisarVies(titulo, description);
-            setDetalhes(result);
-            setLoading(false);
-        }
+  useEffect(() => {
+    if (detalhes) return;
 
-        runAnalysis();
+    async function runAnalysis() {
+      setLoading(true);
+      const result = await analisarVies(titulo, description);
+      setDetalhes(result);
+      setLoading(false);
 
-    }, [titulo, description, existingDetails]); 
-
-    if (loading) {
-        return <div style={{ height: 35, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#6b7280', borderTop: '1px solid #f3f4f6', paddingTop: 10, marginTop: 10 }}>A analisar viés...</div>;
+      if (onAnalysisComplete) {
+        onAnalysisComplete(result);
+      }
     }
 
-    const finalDetalhes = detalhes || DEFAULT_FALLBACK_VIES;
-    const scores = finalDetalhes.scores_ideologicos || [];
+    runAnalysis();
+  }, [titulo, description, detalhes, onAnalysisComplete]);
 
-    return (
-        <BiasSpectrum
-          scores={scores}
-          opinativo={finalDetalhes.opinativo || 0}
-          justificacao={finalDetalhes.justificacao || ""}
-        />
-    );
+  if (loading) return <div>A analisar viés...</div>;
+
+  const finalDetalhes = detalhes || DEFAULT_FALLBACK_VIES;
+  return (
+    <BiasSpectrum
+      scores={finalDetalhes.scores_ideologicos}
+      opinativo={finalDetalhes.opinativo}
+      justificacao={finalDetalhes.justificacao}
+    />
+  );
 }

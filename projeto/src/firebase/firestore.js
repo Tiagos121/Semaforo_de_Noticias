@@ -19,6 +19,21 @@ export async function buscarFavoritos(userId) {
   const q = query(ref, where("userId", "==", userId));
   const snap = await getDocs(q);
 
-  return snap.docs.map((d) => d.data());
+  return snap.docs.map((d) => {
+  const data = d.data();
+
+  return {
+    ...data,
+    vies: data.vies
+      ? {
+          ...data.vies,
+          scores_ideologicos: data.vies.scores_ideologicos
+            ? [...data.vies.scores_ideologicos]
+            : [],
+          opinativo: data.vies.opinativo ?? null,
+        }
+      : null,
+  };
+});
 }
 

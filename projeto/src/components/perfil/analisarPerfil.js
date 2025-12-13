@@ -1,66 +1,86 @@
-export function analisarViesPessoal(savedNews) {
+// src/components/perfil/analisarPerfil.js
+import BiasAnalyzer from '../BiasAnalyzer'; // componente/função que consulta a API
+
+export async function analisarViesPessoal(savedNews) {
     if (!savedNews || savedNews.length === 0) {
         return {
-            scores: [],
+            scores: [
+                { label: 'esquerda', score: 0 },
+                { label: 'centro', score: 0 },
+                { label: 'direita', score: 0 }
+            ],
             opinativo: 0,
             color: 'gray',
             label: 'Nenhuma análise disponível',
         };
     }
 
-    // 🛑 REMOVIDO: const total = savedNews.length; (Substituído pelo totalScore)
-    let counts = { left: 0, center: 0, right: 0 };
-    let totalScore = 0; 
+    const allVies = [];
 
-    savedNews.forEach(news => {
-        const bias = news.bias ? news.bias.toLowerCase() : 'center';
-        
-        // 🛑 CORRIGIDO: Usamos 'in' para verificar se a chave existe
-        if (bias in counts) {
-            counts[bias]++;
-            totalScore++; 
+    for (const news of savedNews) {
+        let viesData = news.vies || { scores_ideologicos: [], opinativo: 0 };
+
+        // Normaliza Map/Proxy Firestore
+        try {
+            viesData = JSON.parse(JSON.stringify(viesData));
+        } catch {
+            viesData = { scores_ideologicos: [], opinativo: 0 };
+        }
+
+        // Se não tiver scores, chama o BiasAnalyzer
+        if (!viesData.scores_ideologicos || viesData.scores_ideologicos.length === 0) {
+            try {
+                const apiResult = await BiasAnalyzer(news.title, news.description || "");
+                viesData = apiResult || { scores_ideologicos: [], opinativo: 0 };
+            } catch {
+                viesData = { scores_ideologicos: [], opinativo: 0 };
+            }
+        }
+
+        allVies.push(viesData);
+    }
+
+    // Soma e calcula médias
+    const totalScores = { esquerda: 0, centro: 0, direita: 0 };
+    let totalOpinativo = 0;
+    let opinativoCount = 0;
+
+    allVies.forEach(vies => {
+        vies.scores_ideologicos.forEach(s => {
+            const label = s.label.toLowerCase();
+            if (label in totalScores) totalScores[label] += Number(s.score) || 0;
+        });
+        const opinativoVal = Number(vies.opinativo);
+        if (!isNaN(opinativoVal)) {
+            totalOpinativo += opinativoVal;
+            opinativoCount++;
         }
     });
 
-    // 🛑 Tratamento de caso onde totalScore é 0 (Embora o check inicial já trate disso)
-    if (totalScore === 0) {
-        return analisarViesPessoal([]);
-    }
+    const total = totalScores.esquerda + totalScores.centro + totalScores.direita;
+    const scoresArray = total === 0
+        ? [
+            { label: 'esquerda', score: 0 },
+            { label: 'centro', score: 0 },
+            { label: 'direita', score: 0 }
+          ]
+        : [
+            { label: 'esquerda', score: (totalScores.esquerda / total) * 100 },
+            { label: 'centro', score: (totalScores.centro / total) * 100 },
+            { label: 'direita', score: (totalScores.direita / total) * 100 }
+          ];
 
-    // Calcular percentagens relativas
-    const percentages = {
-        left: (counts.left / totalScore) * 100,
-        center: (counts.center / totalScore) * 100,
-        right: (counts.right / totalScore) * 100
-    };
-
-    // Determinar o viés dominante
-    let dominantBias = 'center';
-    let maxPercent = percentages.center;
-
-    if (percentages.left > maxPercent) {
-        maxPercent = percentages.left;
-        dominantBias = 'left';
-    }
-    if (percentages.right > maxPercent && percentages.right >= percentages.left) {
-        dominantBias = 'right';
-    }
-
-    // Mapeamento de cor e label (Left=Red, Center=Gray, Right=Blue)
+    const dominant = scoresArray.reduce((prev, curr) => curr.score > prev.score ? curr : scoresArray[1]);
     const biasMap = {
-        left: { color: 'red', label: 'Esquerda' },
-        center: { color: 'gray', label: 'Centro' },
-        right: { color: 'blue', label: 'Direita' }
+        esquerda: { color: 'red', label: 'Esquerda' },
+        centro: { color: 'gray', label: 'Centro' },
+        direita: { color: 'blue', label: 'Direita' },
     };
 
     return {
-        scores: [
-            { label: 'esquerda', score: percentages.left },
-            { label: 'centro', score: percentages.center },
-            { label: 'direita', score: percentages.right }
-        ],
-        opinativo: 0, 
-        color: biasMap[dominantBias].color,
-        label: biasMap[dominantBias].label,
+        scores: scoresArray,
+        opinativo: opinativoCount > 0 ? totalOpinativo / opinativoCount : 0,
+        color: biasMap[dominant.label].color,
+        label: biasMap[dominant.label].label
     };
 }

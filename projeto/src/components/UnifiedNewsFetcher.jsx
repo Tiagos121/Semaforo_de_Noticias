@@ -18,7 +18,6 @@ function sanitizeQuery(term = "") {
   t = t.replace(/[^a-zA-Z0-9\s]/g, " "); // remover vírgulas, acentos estranhos etc.
   t = t.replace(/\s+/g, " ").trim();
 
-  // reduzir termos muito longos (GNews dá 400 acima de 63 chars)
   if (t.length > 60) t = t.slice(0, 57);
 
   return t;
@@ -112,7 +111,6 @@ function preferArticle(a, b) {
   return a;
 }
 
-
 // ============================================================
 // FETCH GNEWS — APENAS com correções na query
 // ============================================================
@@ -143,13 +141,8 @@ const fetchGNews = async (term, max = MAX_NEWS_FETCH) => {
 
     if (res.status === 400) {
       console.warn("⚠️ GNews 400 — query demasiado longa ou inválida:", query);
-
-      // tentar fallback com 1 palavra apenas
       const fallback = query.split(" ")[0];
-      if (fallback && fallback.length > 2) {
-        return fetchGNews(fallback, max);
-      }
-
+      if (fallback && fallback.length > 2) return fetchGNews(fallback, max);
       return [];
     }
 
@@ -169,12 +162,19 @@ const fetchGNews = async (term, max = MAX_NEWS_FETCH) => {
 };
 
 // ============================================================
-// COMPONENTE PRINCIPAL (SEM ALTERAÇÕES NA LÓGICA!)
+// COMPONENTE PRINCIPAL
 // ============================================================
 export default function UnifiedNewsFetcher({ terms = [], target = 8, render }) {
   const [feed, setFeed] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // 🔹 Função para atualizar o viés de uma notícia no feed
+  const updateFeedBias = (id, result) => {
+    setFeed(prev =>
+      prev.map(n => n.id === id ? { ...n, detalhes: result } : n)
+    );
+  };
 
   const carregarNoticias = useCallback(async () => {
     setLoading(true);
@@ -182,7 +182,6 @@ export default function UnifiedNewsFetcher({ terms = [], target = 8, render }) {
 
     try {
       let articles = [];
-
       for (const term of terms) {
         const fetched = await fetchGNews(term, MAX_NEWS_FETCH);
         articles.push(...fetched);
@@ -234,7 +233,6 @@ export default function UnifiedNewsFetcher({ terms = [], target = 8, render }) {
             break;
           }
         }
-
         if (!isDup) kept.push(p);
       }
 
@@ -246,7 +244,7 @@ export default function UnifiedNewsFetcher({ terms = [], target = 8, render }) {
             x.original.url ||
             `${x.titleNorm}-${Math.random().toString(36).slice(2, 9)}`,
           image: x.original.image || defaultImage,
-          detalhes: {},
+          detalhes: {}, // inicialmente vazio
         }));
 
       setFeed(processed);
@@ -262,5 +260,6 @@ export default function UnifiedNewsFetcher({ terms = [], target = 8, render }) {
     carregarNoticias();
   }, [carregarNoticias]);
 
-  return render(feed, loading, error);
+  // 🔹 Passa updateFeedBias para o render prop
+  return render(feed, loading, error, updateFeedBias);
 }
