@@ -15,7 +15,24 @@ export default function NewsCard({ noticia, isFavorito, toggleFavorito, updateFe
   const scores = detalhes?.scores_ideologicos || [];
   const favorito = isFavorito(noticia.url);
 
-  const handleToggle = () => toggleFavorito(noticia);
+  // 🛑 CORREÇÃO CRÍTICA: Garante que a notícia enviada para o Firebase contém os detalhes da análise local
+  const handleToggle = () => {
+    // Verifica se a análise já terminou (se existem scores)
+    const temAnalise = detalhes && Object.keys(detalhes).length > 0 && scores.length > 0;
+
+    if (!temAnalise && !favorito) {
+      alert("Aguarde um momento... A análise de viés ainda está a ser processada.");
+      return;
+    }
+
+    // Criamos uma versão da notícia que obrigatoriamente inclui o viés atualizado
+    const noticiaParaGuardar = {
+      ...noticia,
+      detalhes: detalhes // Anexa o estado 'detalhes' capturado pelo BiasAnalyzer
+    };
+
+    toggleFavorito(noticiaParaGuardar);
+  };
 
   // Atualiza detalhes local e no feed global quando a análise termina
   const handleAnalysisComplete = (result) => {
@@ -29,6 +46,9 @@ export default function NewsCard({ noticia, isFavorito, toggleFavorito, updateFe
       setDetalhes(noticia.detalhes || noticia.vies);
     }
   }, [noticia.detalhes, noticia.vies]);
+
+  // Determina se o botão deve estar visualmente desativado (opacidade reduzida)
+  const aCarregarVies = !scores.length && !favorito;
 
   return (
     <div className="news-card">
@@ -76,9 +96,10 @@ export default function NewsCard({ noticia, isFavorito, toggleFavorito, updateFe
             onClick={handleToggle}
             title={favorito ? "Remover favorito" : "Guardar favorito"}
             className={`favorite-toggle-btn ${favorito ? "is-favorito" : ""}`}
+            style={{ opacity: aCarregarVies ? 0.6 : 1, cursor: aCarregarVies ? "wait" : "pointer" }}
           >
             <span role="img" aria-label="favorito">{favorito ? "★" : "☆"}</span>
-            {favorito ? " Guardado" : " Guardar"}
+            {favorito ? " Guardado" : (aCarregarVies ? " A analisar..." : " Guardar")}
           </button>
         </div>
       )}

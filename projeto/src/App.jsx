@@ -6,7 +6,7 @@ import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import Guardados from "./pages/Guardados";
 import NoticiasLocais from "./pages/NoticiasLocais";
-import VideosPotentes from "./pages/VideosPotentes";
+import VideosNoticias from "./pages/VideosNoticias";
 import PerfilPage from "./components/perfil/PerfilPage";
 import LoginPage from "./components/perfil/LoginPage";
 
@@ -20,9 +20,9 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/guardados" element={<Guardados />} />
           <Route path="/locais" element={<NoticiasLocais />} />
-          <Route path="/videos" element={<VideosPotentes />} />
-           <Route path="/login" element={<LoginPage />} />
-           <Route path="/perfil" element={<PerfilPage />} />
+          <Route path="/videos" element={<VideosNoticias />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/perfil" element={<PerfilPage />} />
         </Routes>
         
       </BrowserRouter>

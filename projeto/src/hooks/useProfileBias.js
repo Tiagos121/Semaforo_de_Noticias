@@ -32,23 +32,18 @@ export function useProfileBias(user) {
         const favoritesList = await buscarFavoritos(user.uid);
 
         // Normaliza o vies de cada notícia
-        favoritesList.forEach((news, idx) => {
+        favoritesList.forEach((news) => {
           news.vies = news.vies
             ? JSON.parse(JSON.stringify(news.vies))
             : { scores_ideologicos: [], opinativo: 0 };
-
-          console.log(`🧪 NOTÍCIA ${idx} | título:`, news.title);
-          console.log(`🧪 NOTÍCIA ${idx} | vies normalizado:`, news.vies);
         });
 
-        // 🔹 AQUI: usar await porque analisarViesPessoal é async
+        // Usa await porque analisarViesPessoal é async
         const result = await analisarViesPessoal(favoritesList);
 
         setBiasResult(result);
         setSavedCount(favoritesList.length);
 
-        console.log("🧪 PERFIL | biasResult calculado:", result);
-        console.log("🧪 PERFIL | Número de notícias guardadas:", favoritesList.length);
       } catch (error) {
         console.error("Erro ao carregar análise de perfil:", error);
         setBiasResult(DEFAULT_FALLBACK_RESULT);

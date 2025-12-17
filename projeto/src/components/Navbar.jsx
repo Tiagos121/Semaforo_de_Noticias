@@ -3,10 +3,12 @@ import { useAuth } from "../context/useAuth";
 import logo from "../assets/logo_sn.png";
 import "../styles/global.css";
 import AvatarImage from '../components/perfil/AvatarImage'
+import { useProfileBias } from '../hooks/useProfileBias';
 
 
 export default function Navbar() {
   const { user } = useAuth();
+  const { biasResult } = useProfileBias(user);
 
   return (
     <nav className="navbar">
@@ -17,7 +19,7 @@ export default function Navbar() {
 
         <Link to="/guardados">⭐ Guardados</Link>
         <Link to="/locais">📍 Notícias Locais</Link>
-        <Link to="/videos">🎥 Vídeos e Podcasts</Link>
+        <Link to="/videos">🎥 Vídeos</Link>
       </div>
 
       <div className="navbar-right">
@@ -27,9 +29,8 @@ export default function Navbar() {
             <AvatarImage
               photoURL={user.photoURL}
               identifier={user.displayName || user.email}
-              // 🛑 APLICAR A CLASSE CSS PURA AQUI:
               size="w-8 h-8 perfil-img"
-              
+              ringColor={biasResult.color}
             />
             
           </Link>
