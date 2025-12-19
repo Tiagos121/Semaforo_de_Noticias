@@ -1,0 +1,117 @@
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.video-card {
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: transform 0.2s ease;
+}
+
+.video-card:hover {
+  transform: translateY(-4px);
+}
+
+.video-thumb {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+}
+
+.video-info {
+  padding: 10px;
+}
+
+.video-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.video-channel {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+
+
+
+/* SEARCH BAR */
+
+
+
+/* Container do Formulário */
+.search-form {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 25px;
+}
+
+/* Wrapper para posicionar o ícone dentro do input */
+.search-input-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.search-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+/* Estilização do Input */
+.search-input {
+  width: 100%;
+  padding: 12px 14px 12px 42px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Botão Estilo YouTube */
+.search-button {
+  padding: 0 24px;
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-button:hover {
+  background-color: #222; /* Vermelho um pouco mais escuro */
+}
+
+.search-button:active {
+  transform: scale(0.98); /* Efeito de clique */
+}
+
+/* Responsividade para ecrãs pequenos */
+@media (max-width: 480px) {
+  .search-form {
+    flex-direction: column;
+  }
+  .search-button {
+    padding: 12px;
+  }
+}

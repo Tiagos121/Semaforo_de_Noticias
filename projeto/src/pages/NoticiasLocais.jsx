@@ -1,77 +1,30 @@
 // src/pages/NoticiasLocais.jsx
-import React, { useContext } from "react";
-// Caminhos corrigidos para o contexto
-import { AuthContext } from "../context/AuthContextValue"; 
-// Caminhos corrigidos para hooks de favoritos
-import { useFavoritos } from "../hooks/useFavoritos"; 
-// Caminhos corrigidos para firebase/favoritos
-import { adicionarFavorito, removerFavorito } from "../firebase/favoritos";
+import React from "react";
+import { useFavoritosActions } from "../hooks/useFavoritiosActions"; 
 
 // Componentes
-// Caminhos corrigidos para componentes
 import NewsCard from "../components/NewsCard"; 
 import UnifiedNewsFetcher from "../components/UnifiedNewsFetcher";
-// import DisplayLocalizacao - REMOVIDO para evitar sobrecarga de API
 
 // Hooks Essenciais
-// Caminhos corrigidos para hooks
 import { useLocationData } from "../hooks/useLocationData"; 
-import { useLocalNewsTerms } from "../hooks/useLocalNewsTerms"; // <-- Novo Hook!
+import { useLocalNewsTerms } from "../hooks/useLocalNewsTerms"; 
 
 // Constantes
 const MAX_NEWS_LOCAL_DISPLAY = 4; 
 
 export default function NoticiasLocais() {
-  const { user } = useContext(AuthContext);
-  const favoritos = useFavoritos();
+  
+  // ÚNICA CHAMADA: Obtém todas as funções e a lista 'favoritos' do hook
+  const { toggleFavorito, isFavorito, favoritos } = useFavoritosActions();
 
-  // 1. OBTENÇÃO DA LOCALIZAÇÃO (Chamado apenas UMA vez)
+  // 1. OBTENÇÃO DA LOCALIZAÇÃO
   const { location, loading: locationLoading, error: locationError } = useLocationData();
   
-  // 2. GERAÇÃO DOS TERMOS DE PESQUISA COM FALLBACK (Novo Hook)
-  // Assumimos que o useLocalNewsTerms agora retorna 'queryTerms', 'cityName' E 'currentLevel'.
+  // 2. GERAÇÃO DOS TERMOS DE PESQUISA COM FALLBACK
   const { queryTerms, cityName, currentLevel } = useLocalNewsTerms(location);
-  
-  // Funções de Favoritos (Omitidas para brevidade)
-  const isFavorito = (url) => favoritos.some((f) => f.url === url);
 
-  const toggleFavorito = async (noticia) => {
-    if (!user) {
-      // Usar uma modal em vez de alert
-      console.log("Precisas de fazer login para guardar favoritos.");
-      return;
-    }
-    const ja = isFavorito(noticia.url);
-    try {
-      if (ja) {
-        const fav = favoritos.find((f) => f.url === noticia.url);
-        if (fav?.id) {
-          await removerFavorito(fav.id);
-          // Usar uma modal em vez de alert
-          console.log("✅ Removido dos Guardados.");
-        }
-      } else {
-        const toSave = {
-          url: noticia.url,
-          title: noticia.title,
-          description: noticia.description,
-          image: noticia.image,
-          source: noticia.source || {},
-          vies: noticia.detalhes || null,
-        };
-        await adicionarFavorito(user.uid, toSave);
-        // Usar uma modal em vez de alert
-        console.log("⭐ Guardado nos Favoritos!");
-      }
-    } catch (error) {
-      console.error("ERRO FIREBASE:", error);
-      // Usar uma modal em vez de alert
-      console.log(`ERRO DE FIREBASE: ${error.message}`);
-    }
-  };
-
-
-  // 3. LÓGICA DE CARREGAMENTO INICIAL DA LOCALIZAÇÃO (Simplificada)
+  // 3. LÓGICA DE CARREGAMENTO INICIAL DA LOCALIZAÇÃO
   if (locationLoading) {
     return (
       <div className="page-container" style={{ padding: 20 }}>
@@ -87,11 +40,8 @@ export default function NoticiasLocais() {
   
   return (
     <div className="page-container" style={{ padding: 20 }}>
-      {/* 4. DisplayLocalizacao REMOVIDO DAQUI para evitar duplicação de pedidos de localização. */}
-
       <div style={{backgroundColor: "#9ca3af", padding: "25px", marginBottom: 20, borderRadius:"40px"}}>
         <h1 style={{ fontSize: 28, marginBottom: 8, color: "white"}}>📍Notícias Locais ({cityName})</h1>
-        {/* 5. ALTERAÇÃO AQUI: Adicionar o nível de pesquisa no subtítulo */}
         <p style={{ color: "white", marginBottom: 0 }}>
           Notícias mais proximas de {cityName} com análise de viés. {searchLevelDescription}
         </p>
@@ -103,10 +53,9 @@ export default function NoticiasLocais() {
         </div>
       )}
 
-
-      {/* 6. CHAMA O UNIFIEDNEWSFETCHER */}
+      {/* CHAMA O UNIFIEDNEWSFETCHER */}
       <UnifiedNewsFetcher 
-          terms={queryTerms} // Usamos a lista de termos gerada pelo useLocalNewsTerms
+          terms={queryTerms} 
           target={MAX_NEWS_LOCAL_DISPLAY}    
           render={(feed, loading, error) => (
             <>

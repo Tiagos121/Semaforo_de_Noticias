@@ -16,10 +16,10 @@ export function analisarViesPessoal(savedNews) {
     let opinativoCount = 0;
 
     savedNews.forEach((news) => {
-        // 🔹 Usa 'vies' (Firestore) ou 'detalhes' (Estado local)
+        // Usa 'vies' (Firestore) ou 'detalhes' (Estado local)
         let viesData = news.vies || news.detalhes || null;
 
-        // 🔥 Normalização para resolver objetos Proxy/Map do Firestore
+        // Normalização para resolver objetos Proxy/Map do Firestore
         try {
             if (viesData && typeof viesData === 'object') {
                 viesData = JSON.parse(JSON.stringify(viesData));
@@ -33,7 +33,7 @@ export function analisarViesPessoal(savedNews) {
             return;
         }
 
-        // 1️⃣ Soma dos Scores Ideológicos
+        // Soma dos Scores Ideológicos
         viesData.scores_ideologicos.forEach(scoreObj => {
             const label = scoreObj?.label?.toLowerCase().trim();
             const scoreValue = Number(scoreObj?.score) || 0;
@@ -44,7 +44,7 @@ export function analisarViesPessoal(savedNews) {
             }
         });
 
-        // 2️⃣ Média de Opinatividade
+        // Média de Opinatividade
         const opinativoValue = Number(viesData.opinativo);
         if (!Number.isNaN(opinativoValue)) {
             totalOpinativo += opinativoValue;
@@ -75,7 +75,7 @@ export function analisarViesPessoal(savedNews) {
         { label: 'direita', score: percentages.direita }
     ];
 
-    // 🏆 DETERMINAÇÃO DO VENCEDOR (Onde estava o erro)
+    // DETERMINAÇÃO DO VENCEDOR (Onde estava o erro)
     // Ordenamos do maior score para o menor.
     const sortedScores = [...scoresArray].sort((a, b) => b.score - a.score);
     const dominant = sortedScores[0];
