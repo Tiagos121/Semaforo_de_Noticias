@@ -5,9 +5,9 @@ import BiasSpectrum from './BiasSpectrum';
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 const MODEL_API_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent";
-  
+
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; 
-const MAX_CONCURRENT_REQUESTS = 3;
+const MAX_CONCURRENT_REQUESTS = 1;
 let activeRequests = 0;
 const requestQueue = [];
 
