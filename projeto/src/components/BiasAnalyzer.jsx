@@ -1,5 +1,5 @@
 // src/components/BiasAnalyzer.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import BiasSpectrum from './BiasSpectrum'; 
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
@@ -24,7 +24,8 @@ async function processQueue() {
     reject(error);
   } finally {
     activeRequests--;
-    setTimeout(() => processQueue(), 500);
+    // Intervalo de 1 segundo para evitar o erro 429
+    setTimeout(() => processQueue(), 1000);
   }
 }
 
@@ -80,7 +81,6 @@ async function analisarVies(titulo, descricao) {
 
   if (!GEMINI_API_KEY) return DEFAULT_FALLBACK_VIES;
 
-  // Mantém exatamente o teu prompt original sem alterações
   const prompt = `
     Analise o texto da notícia a seguir para determinar o seu viés ideológico (Esquerda, Centro, Direita) e a sua percentagem de opinatividade (0% a 100%).
     A soma total dos scores de Esquerda, Centro e Direita deve ser 100.
@@ -138,22 +138,31 @@ export default function BiasAnalyzer({ titulo, description, existingDetails, onA
   );
   const [loading, setLoading] = useState(!detalhes);
 
+  // useRef trava o processo para não repetir no StrictMode
+  const processado = useRef(false);
+
   useEffect(() => {
-    if (detalhes) return;
+    let isMounted = true; // 🔹 Evita atualizar estado se o componente morrer
+    if (detalhes || processado.current) return;
 
     async function runAnalysis() {
+      processado.current = true;
       setLoading(true);
       const result = await analisarVies(titulo, description);
-      setDetalhes(result);
-      setLoading(false);
-
-      if (onAnalysisComplete) {
-        onAnalysisComplete(result);
+      
+      if (isMounted) {
+        setDetalhes(result);
+        setLoading(false);
+        if (onAnalysisComplete) {
+          onAnalysisComplete(result);
+        }
       }
     }
 
     runAnalysis();
-  }, [titulo, description, detalhes, onAnalysisComplete]);
+
+    return () => { isMounted = false; }; // 🔹 Cleanup
+  }, [titulo, description]); // 🔹 Dependências limpas: apenas o que define a notícia
 
   if (loading) return <div>A analisar viés...</div>;
 

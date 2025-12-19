@@ -4,7 +4,6 @@ const GNEWS_KEY = import.meta.env.VITE_GNEWS_API_KEY;
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const YT_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
 
-// 🔹 Mantendo o URL que funciona na tua Home
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_KEY}`;
 
 export function useNoticiasVideos(manualQuery, limit) {
@@ -12,26 +11,22 @@ export function useNoticiasVideos(manualQuery, limit) {
   const [loading, setLoading] = useState(false);
   const [noticiaOriginal, setNoticiaOriginal] = useState(null);
 
-  // 🔹 SOLUÇÃO PARA O "TOO MANY REQUESTS":
-  // O useRef impede que o código corra mais do que uma vez por mudança de query.
-  const requisicaoEmCurso = useRef(false);
-  const ultimaQuery = useRef("");
+  // Controlo de execução para evitar duplicados
+  const executando = useRef(false);
+  const queryAnterior = useRef("");
 
   useEffect(() => {
-    // Variável para controlar se o componente ainda está montado
     let isMounted = true;
-
-    // Se a query for a mesma e já estivermos a processar, ignoramos
-    if (requisicaoEmCurso.current && ultimaQuery.current === manualQuery) return;
+    
+    // Evita rodar se for a mesma query e já estivermos a carregar
+    if (executando.current && queryAnterior.current === manualQuery) return;
 
     async function executarFluxoCompleto() {
-      // Verifica se ainda está montado antes de iniciar
       if (!isMounted) return;
-
-      console.log("[DEBUG] Iniciando fluxo de vídeos...");
+      
       setLoading(true);
-      requisicaoEmCurso.current = true;
-      ultimaQuery.current = manualQuery;
+      executando.current = true;
+      queryAnterior.current = manualQuery;
 
       try {
         let queryFinal = "";
@@ -47,19 +42,17 @@ export function useNoticiasVideos(manualQuery, limit) {
           let tituloParaIA = "notícias política Portugal";
           if (gnewsData.articles?.length > 0) {
             const noticiaSorteada = gnewsData.articles[Math.floor(Math.random() * gnewsData.articles.length)];
-            // Só atualiza o estado se ainda estiver montado
             if (isMounted) setNoticiaOriginal(noticiaSorteada);
             tituloParaIA = noticiaSorteada.title;
           }
 
           let keywords = "política Portugal";
           try {
-            // Chamada ao Gemini simplificada (sem 'role') para evitar erro 400
             const geminiRes = await fetch(GEMINI_URL, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                contents: [{ parts: [{ text: `Extrai apenas 3 palavras-chave simples desta notícia para pesquisa no YouTube: "${tituloParaIA}"` }] }]
+                contents: [{ parts: [{ text: `Extrai apenas 3 palavras-chave simples desta notícia: "${tituloParaIA}"` }] }]
               })
             });
 
@@ -69,7 +62,7 @@ export function useNoticiasVideos(manualQuery, limit) {
               if (extractedKeywords) keywords = extractedKeywords;
             }
           } catch (error) {
-            console.warn("Gemini falhou, usando fallback.", error);
+            console.warn("Gemini falhou nos vídeos.", error);
           }
           
           queryFinal = `${keywords} notícias Portugal`;
@@ -79,45 +72,36 @@ export function useNoticiasVideos(manualQuery, limit) {
           if (isMounted) setNoticiaOriginal(null);
         }
 
-        // 3. Verifica se ainda está montado antes do pedido ao YouTube
-        if (!isMounted) return;
-
-        // 🔹 PESQUISA YOUTUBE
+        // Busca YouTube
         const ytUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=${limit}&q=${encodeURIComponent(queryFinal)}&relevanceLanguage=pt&regionCode=PT&key=${YT_KEY}`;
         
         const ytRes = await fetch(ytUrl);
         const ytData = await ytRes.json();
 
-        if (!ytRes.ok) {
-          if (isMounted) {
-            console.error("[DEBUG] Erro YouTube Detalhado:", ytData.error?.message || ytData.error);
-            setVideos([]);
-          }
-          return;
-        }
-
-        // 4. Só atualiza os vídeos se o componente ainda estiver ativo
         if (isMounted) {
-          setVideos(ytData.items || []);
+          if (!ytRes.ok) {
+            console.error("YouTube Erro:", ytData.error?.message);
+            setVideos([]);
+          } else {
+            setVideos(ytData.items || []);
+          }
         }
 
       } catch (error) {
-        if (isMounted) console.error("[DEBUG] Erro no fluxo:", error);
+        if (isMounted) console.error("Erro no Hook:", error);
       } finally {
-        // 5. Finaliza o estado apenas se montado
         if (isMounted) {
           setLoading(false);
-          requisicaoEmCurso.current = false;
+          executando.current = false;
         }
       }
     }
 
     executarFluxoCompleto();
 
-    // 6. Função de limpeza (Cleanup): essencial para o StrictMode
-    return () => {
-      isMounted = false;
-      requisicaoEmCurso.current = false;
+    return () => { 
+      isMounted = false; 
+      executando.current = false;
     };
   }, [manualQuery, limit]);
 
