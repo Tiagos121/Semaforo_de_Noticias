@@ -207,7 +207,7 @@
   border-radius: 1rem;
   border: 1px solid var(--border);
   width: 90%;
-  max-width: 500px;   /* 👈 MAIS RESTRITO como pediste */
+  max-width: 500px; 
   text-align: center;
 }
 

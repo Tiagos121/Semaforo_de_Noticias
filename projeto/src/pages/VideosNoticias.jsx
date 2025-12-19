@@ -16,7 +16,7 @@ export default function VideosNoticias() {
     <div className="page-container">
       <div style={{ backgroundColor: "#1e3a8a", padding: "25px", marginBottom: 20, borderRadius: "40px" }}>
         <h1 style={{ fontSize: 28, marginBottom: 8, color: "white" }}>
-          ⚖️ Semáforo Notícias — Política
+          🎥 Semáforo Notícias — Videos
         </h1>
         <p style={{ color: "white" }}>
           Pesquisa inteligente assistida por Gemini para vídeos de política internacional e nacional.

@@ -80,7 +80,7 @@ async function analisarVies(titulo, descricao) {
 
   if (!GEMINI_API_KEY) return DEFAULT_FALLBACK_VIES;
 
-  // 🔹 Mantém exatamente o teu prompt original sem alterações
+  // Mantém exatamente o teu prompt original sem alterações
   const prompt = `
     Analise o texto da notícia a seguir para determinar o seu viés ideológico (Esquerda, Centro, Direita) e a sua percentagem de opinatividade (0% a 100%).
     A soma total dos scores de Esquerda, Centro e Direita deve ser 100.

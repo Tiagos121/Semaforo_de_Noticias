@@ -1,4 +1,4 @@
-// AuthContext.jsx (Versão Corrigida para Strict Mode)
+// AuthContext.jsx 
 
 import { useEffect, useState } from "react";
 import { AuthContext } from "./AuthContextValue";

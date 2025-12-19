@@ -18,14 +18,14 @@ export function useNoticiasVideos(manualQuery, limit) {
   const ultimaQuery = useRef("");
 
   useEffect(() => {
-    // 1. Variável para controlar se o componente ainda está montado
+    // Variável para controlar se o componente ainda está montado
     let isMounted = true;
 
     // Se a query for a mesma e já estivermos a processar, ignoramos
     if (requisicaoEmCurso.current && ultimaQuery.current === manualQuery) return;
 
     async function executarFluxoCompleto() {
-      // 2. Verifica se ainda está montado antes de iniciar
+      // Verifica se ainda está montado antes de iniciar
       if (!isMounted) return;
 
       console.log("[DEBUG] Iniciando fluxo de vídeos...");

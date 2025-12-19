@@ -75,7 +75,7 @@ export function analisarViesPessoal(savedNews) {
         { label: 'direita', score: percentages.direita }
     ];
 
-    // DETERMINAÇÃO DO VENCEDOR (Onde estava o erro)
+    // DETERMINAÇÃO DO VENCEDOR
     // Ordenamos do maior score para o menor.
     const sortedScores = [...scoresArray].sort((a, b) => b.score - a.score);
     const dominant = sortedScores[0];

@@ -7,7 +7,7 @@ import NewsCard from "../components/NewsCard";
 export default function Guardados() {
   const { user } = useAuth();
   
-  // 🛑 ÚNICA CHAMADA: Obtém todas as funções e a lista 'favoritos' do hook
+  // ÚNICA CHAMADA: Obtém todas as funções e a lista 'favoritos' do hook
   const { toggleFavorito, isFavorito, favoritos } = useFavoritosActions();
   
 

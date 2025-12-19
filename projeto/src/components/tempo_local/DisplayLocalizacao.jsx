@@ -10,7 +10,6 @@ import {
 import "./DisplayLocalizacaoStyles.css";
 
 // Componente de Ícone (Font Awesome)
-// (CloudIcon não era usado, por isso removi-o)
 const MapPinIcon = ({ className }) => (
   <i className={`fas fa-map-marker-alt ${className}`}></i>
 );

@@ -10,7 +10,7 @@ const LOCATIONIQ_URL = "https://us1.locationiq.com/v1/reverse.php";
 
 const OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast";
 
-// 🟢 CACHE PARA LOCALIZAÇÃO: Evita 429 no LocationIQ
+// CACHE PARA LOCALIZAÇÃO: Evita 429 no LocationIQ
 const LOCATION_CACHE_KEY = 'cached_user_location';
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hora de cache
 
@@ -92,7 +92,7 @@ export const getTempColor = (temp) => {
     return 'text-indigo-400';
 };
 
-// 🟢 SIMPLIFICAÇÃO DA CIDADE
+// SIMPLIFICAÇÃO DA CIDADE
 const simplifyCityName = (rawName) => {
     if (!rawName) return null;
 

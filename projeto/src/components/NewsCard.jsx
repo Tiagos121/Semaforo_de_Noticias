@@ -5,7 +5,7 @@ import BiasSpectrum from "./BiasSpectrum";
 import BiasAnalyzer from "./BiasAnalyzer";
 import defaultImage from "../assets/fundo_sn.png";
 
-// 🔄 NewsCard RECEBE as funções de estado e toggle dos pais
+// NewsCard RECEBE as funções de estado e toggle dos pais
 export default function NewsCard({ noticia, isFavorito, toggleFavorito, updateFeedBias }) {
   const { user } = useContext(AuthContext);
 
@@ -15,7 +15,7 @@ export default function NewsCard({ noticia, isFavorito, toggleFavorito, updateFe
   const scores = detalhes?.scores_ideologicos || [];
   const favorito = isFavorito(noticia.url);
 
-  // 🛑 CORREÇÃO CRÍTICA: Garante que a notícia enviada para o Firebase contém os detalhes da análise local
+  // CORREÇÃO CRÍTICA: Garante que a notícia enviada para o Firebase contém os detalhes da análise local
   const handleToggle = () => {
     // Verifica se a análise já terminou (se existem scores)
     const temAnalise = detalhes && Object.keys(detalhes).length > 0 && scores.length > 0;
@@ -25,7 +25,7 @@ export default function NewsCard({ noticia, isFavorito, toggleFavorito, updateFe
       return;
     }
 
-    // Criamos uma versão da notícia que obrigatoriamente inclui o viés atualizado
+    // Cria uma versão da notícia que obrigatoriamente inclui o viés atualizado
     const noticiaParaGuardar = {
       ...noticia,
       detalhes: detalhes // Anexa o estado 'detalhes' capturado pelo BiasAnalyzer

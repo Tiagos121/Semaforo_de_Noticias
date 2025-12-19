@@ -18,13 +18,13 @@ export default function NoticiasLocais() {
   // ÚNICA CHAMADA: Obtém todas as funções e a lista 'favoritos' do hook
   const { toggleFavorito, isFavorito, favoritos } = useFavoritosActions();
 
-  // 1. OBTENÇÃO DA LOCALIZAÇÃO
+  // OBTENÇÃO DA LOCALIZAÇÃO
   const { location, loading: locationLoading, error: locationError } = useLocationData();
   
-  // 2. GERAÇÃO DOS TERMOS DE PESQUISA COM FALLBACK
+  // GERAÇÃO DOS TERMOS DE PESQUISA COM FALLBACK
   const { queryTerms, cityName, currentLevel } = useLocalNewsTerms(location);
 
-  // 3. LÓGICA DE CARREGAMENTO INICIAL DA LOCALIZAÇÃO
+  // LÓGICA DE CARREGAMENTO INICIAL DA LOCALIZAÇÃO
   if (locationLoading) {
     return (
       <div className="page-container" style={{ padding: 20 }}>

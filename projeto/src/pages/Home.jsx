@@ -18,7 +18,7 @@ const queryTermoPolitica = "política portuguesa OR governo OR eleições";
 
 export default function Home() {
   
-  // 🛑 ÚNICA CHAMADA: Obtém todas as funções e a lista 'favoritos' do hook centralizado
+  // ÚNICA CHAMADA: Obtém todas as funções e a lista 'favoritos' do hook centralizado
   const { toggleFavorito, isFavorito, favoritos } = useFavoritosActions();
  
   return (
@@ -102,7 +102,7 @@ export default function Home() {
                     noticia={noticiaParaCard}
                     isFavorito={isFavorito}
                     toggleFavorito={toggleFavorito}
-                    updateFeedBias={updateFeedBias} // 🔹 aqui passa a função do UnifiedNewsFetcher
+                    updateFeedBias={updateFeedBias} // aqui passa a função do UnifiedNewsFetcher
                   />
                 );
               })}
