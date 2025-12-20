@@ -4,7 +4,7 @@ const GNEWS_KEY = import.meta.env.VITE_GNEWS_API_KEY;
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const YT_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
 
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_KEY}`;
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`;
 
 export function useNoticiasVideos(manualQuery, limit) {
   const [videos, setVideos] = useState([]);

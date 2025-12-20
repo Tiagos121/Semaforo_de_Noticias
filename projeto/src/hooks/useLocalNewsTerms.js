@@ -1,53 +1,52 @@
-// src/hooks/useLocalNewsTerms.js
 import { useState, useEffect } from 'react';
 
-const INITIAL_QUERY_TERMS = ['notícias portugal', 'acontecimentos portugal'];
+// Fallback inicial seguro
+const INITIAL_QUERY_TERMS = ['notícias Portugal'];
 
-/**
- * Hook para gerar termos de pesquisa de notícias locais com lógica de fallback.
- * Prioriza: Cidade > Concelho > Distrito > País.
- * @param {object | null} location - O objeto de localização retornado por useLocationData.
- * @returns {string[]} Lista de termos de pesquisa (e.g., ["notícias Lisboa", "acontecimentos Lisboa"]).
- */
 export function useLocalNewsTerms(location) {
   const [queryTerms, setQueryTerms] = useState(INITIAL_QUERY_TERMS);
-  const [cityName, setCityName] = useState("Portugal"); // Estado para o nome da cidade visível
+  const [cityName, setCityName] = useState("Portugal");
 
   useEffect(() => {
+    // Se ainda não temos localização, mostramos Portugal
     if (!location) {
       setQueryTerms(INITIAL_QUERY_TERMS);
       setCityName("Portugal");
       return;
     }
 
-    // 1. Criar uma lista de níveis geográficos em ordem de prioridade.
-    // O useLocationData deve retornar: { city, freguesia, concelho, distrito, pais }
-    const termsOrder = [
+
+    // Se for "Portugal", é porque falhou o reverso, então assumimos nacional.
+    const primaryName = location.city || location.concelho || location.distrito || "Portugal";
+    setCityName(primaryName);
+
+    if (primaryName === "Portugal") {
+      setQueryTerms(['notícias Portugal']);
+      return;
+    }
+
+    // Construir a Query Local
+    const termosLocais = [
       location.city,
       location.concelho,
-      location.distrito,
-      location.pais, // Fica como último fallback
+      location.distrito
     ]
-    // Remover termos nulos, undefined ou vazios, e remover duplicados.
-    .filter(name => name)
-    .filter((value, index, self) => self.indexOf(value) === index); 
+    .filter(Boolean)
+    .filter((value, index, self) => self.indexOf(value) === index) // Remove duplicados
+    .map(local => `"${local}"`); // Aspas para nomes compostos
 
-    // O termo principal para o título da página é o mais específico (cidade)
-    const primaryTerm = termsOrder[0] || "Portugal";
-    setCityName(primaryTerm);
+    const localQuery = termosLocais.join(" OR ");
 
-    // 2. Gerar a lista final de queries (Ex: ["notícias Aveiro", "acontecimentos Aveiro", "notícias Portugal", ...])
-    const newTerms = termsOrder.flatMap(term => [
-        `notícias ${term}`, 
-        `acontecimentos ${term}`
-    ]);
+
+    const finalTerms = [];
     
-    // 3. Garante que há sempre um fallback (Portugal)
-    if (newTerms.length === 0) {
-      setQueryTerms(INITIAL_QUERY_TERMS);
-    } else {
-      setQueryTerms(newTerms);
+    if (localQuery) {
+      finalTerms.push(localQuery); 
     }
+    
+    finalTerms.push("notícias Portugal"); 
+
+    setQueryTerms(finalTerms);
 
   }, [location]);
 

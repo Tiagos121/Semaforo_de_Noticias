@@ -19,7 +19,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [isRegister, setIsRegister] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(""); // 💡 NOVO: Estado para a mensagem de erro
+  const [errorMessage, setErrorMessage] = useState("");
 
   const navigate = useNavigate();
 
@@ -37,7 +37,7 @@ export default function LoginPage() {
     }
   };
 
-  // 💡 FUNÇÃO DE VALIDAÇÃO DE CAMPOS ATUALIZADA
+  // FUNÇÃO DE VALIDAÇÃO DE CAMPOS ATUALIZADA
   const validateFields = () => {
     if (!email || !password || (isRegister && !name)) {
       setErrorMessage("Por favor, preencha todos os campos obrigatórios.");
@@ -64,7 +64,7 @@ export default function LoginPage() {
         // Cria o utilizador
         result = await createUserWithEmailAndPassword(auth, email, password);
 
-        // 🛑 USO: Chamar a função importada
+        // USO: Chamar a função importada
           const defaultPhotoUrl = generateDiceBearAvatarUrl(name); 
             
             await updateProfile(result.user, { 
@@ -86,7 +86,7 @@ export default function LoginPage() {
 
       navigate("/");
     } catch (error) {
-      // 🛑 Atualiza o estado da mensagem de erro em vez do alert
+      // Atualiza o estado da mensagem de erro em vez do alert
       setErrorMessage("Erro: " + error.message);
     }
   };
@@ -98,23 +98,22 @@ export default function LoginPage() {
       await ensureUserInFirestore(result.user.uid, result.user.email);
       navigate("/");
     } catch (error) {
-      // 🛑 Atualiza o estado da mensagem de erro em caso de falha no Google
+      // Atualiza o estado da mensagem de erro em caso de falha no Google
       setErrorMessage("Erro Google: " + error.message);
     }
   };
 
   return (
-    // Wrapper: min-h-screen flex items-center justify-center
     <div className="flex items-center justify-center bg-gray-50 p-4">
       
-      {/* 💡 Cartão de Autenticação (auth-card) */}
+      {/*Cartão de Autenticação (auth-card) */}
       <div className="auth-card flex flex-col items-center">
         
         <h1 className="auth-title">
           {isRegister ? "Registo" : "Log In"}
         </h1>
 
-        {/* 🛑 ESTRUTURA DO FORMULÁRIO */}
+        {/*ESTRUTURA DO FORMULÁRIO */}
         <div className="w-full">
             
             {/* Campo Nome (apenas para registo) */}
@@ -145,7 +144,7 @@ export default function LoginPage() {
             />
         </div>
 
-        {/* 🛑 MENSAGEM DE ERRO (HTML) */}
+        {/* MENSAGEM DE ERRO (HTML) */}
         {errorMessage && (
             <p className="error-message">
                 {errorMessage}
@@ -159,8 +158,7 @@ export default function LoginPage() {
         >
           {isRegister ? "Registar Agora" : "Entrar"}
         </button>
-
-        {/* Linha Divisória */}
+        
         <div className="divider-line"> 
             <hr />
             <span>OU</span>

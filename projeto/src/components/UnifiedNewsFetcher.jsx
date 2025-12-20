@@ -1,21 +1,25 @@
 // src/components/UnifiedNewsFetcher.jsx
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import defaultImage from "../assets/fundo_sn.png";
 
 const GNEWS_API_KEY = import.meta.env.VITE_GNEWS_API_KEY || "";
-const MAX_NEWS_FETCH = 12;
-const CACHE_TTL_MS = 5 * 60 * 1000;
+const MAX_NEWS_FETCH = 12; 
+const CACHE_TTL_MS = 15 * 60 * 1000; // 15 Minutos (Poupa muita quota)
 
 // ============================================================
-// SANITIZAÇÃO DE TERMOS PARA EVITAR GNEWS 400
+// 1. GESTOR DE PEDIDOS EM VOO (Evita duplicados simultâneos do StrictMode)
 // ============================================================
+const pendingRequests = new Map();
 
+// ============================================================
+// SANITIZAÇÃO
+// ============================================================
 function sanitizeQuery(term = "") {
   if (!term) return "";
 
-  let t = term.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // remover acentos
-  t = t.replace(/[^a-zA-Z0-9\s]/g, " "); // remover vírgulas, acentos estranhos etc.
+  let t = term.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); 
+  t = t.replace(/[^a-zA-Z0-9\s]/g, " "); 
   t = t.replace(/\s+/g, " ").trim();
 
   if (t.length > 60) t = t.slice(0, 57);
@@ -50,7 +54,7 @@ function cacheSet(key, value) {
 }
 
 // ============================================================
-// LEVENSHTEIN / NORMALIZAÇÃO / DEDUPE (SEM ALTERAÇÕES!)
+// LEVENSHTEIN / NORMALIZAÇÃO / DEDUPE
 // ============================================================
 function levenshtein(a = "", b = "") {
   a = a || "";
@@ -112,11 +116,11 @@ function preferArticle(a, b) {
 }
 
 // ============================================================
-// FETCH GNEWS — APENAS com correções na query
+// FETCH GNEWS BLINDADO (Com proteção de duplicados)
 // ============================================================
 const fetchGNews = async (term, max = MAX_NEWS_FETCH) => {
   if (!GNEWS_API_KEY) {
-    console.warn("GNews API key ausente — fetch abortado.");
+    console.warn("GNews API key ausente.");
     return [];
   }
 
@@ -124,41 +128,61 @@ const fetchGNews = async (term, max = MAX_NEWS_FETCH) => {
   if (!query) return [];
 
   const cacheKey = `gnews_${query}`;
+  
+  // 1. Verifica Cache Local
   const cached = cacheGet(cacheKey);
   if (cached) return cached;
 
-  const url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(
-    query
-  )}&lang=pt&country=pt&max=${max}&apikey=${GNEWS_API_KEY}`;
-
-  try {
-    const res = await fetch(url);
-
-    if (res.status === 429) {
-      console.warn("GNews 429 (rate limit)");
-      return [];
-    }
-
-    if (res.status === 400) {
-      console.warn("⚠️ GNews 400 — query demasiado longa ou inválida:", query);
-      const fallback = query.split(" ")[0];
-      if (fallback && fallback.length > 2) return fetchGNews(fallback, max);
-      return [];
-    }
-
-    if (!res.ok) {
-      console.warn("GNews não retornou OK:", res.status);
-      return [];
-    }
-
-    const data = await res.json();
-    const articles = data.articles || [];
-    cacheSet(cacheKey, articles);
-    return articles;
-  } catch (err) {
-    console.warn("Erro fetch GNews:", err);
-    return [];
+  // Verifica se já existe um pedido igual A DECORRER
+  if (pendingRequests.has(cacheKey)) {
+    return pendingRequests.get(cacheKey);
   }
+
+  // 3. Cria a promessa do pedido
+  const fetchPromise = (async () => {
+    const url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(
+      query
+    )}&lang=pt&country=pt&max=${max}&apikey=${GNEWS_API_KEY}`;
+
+    try {
+      const res = await fetch(url);
+
+      if (res.status === 429) {
+        console.warn("GNews 429 (rate limit)");
+        return [];
+      }
+
+      if (res.status === 400) {
+        console.warn("⚠️ GNews 400 — query inválida:", query);
+        return [];
+      }
+
+      if (!res.ok) {
+        console.warn("GNews erro:", res.status);
+        return [];
+      }
+
+      const data = await res.json();
+      const articles = data.articles || [];
+      
+      // Só guarda em cache se tiver sucesso
+      if (articles.length > 0) {
+        cacheSet(cacheKey, articles);
+      }
+      return articles;
+
+    } catch (err) {
+      console.warn("Erro fetch GNews:", err);
+      return [];
+    } finally {
+      pendingRequests.delete(cacheKey);
+    }
+  })();
+
+  // Regista o pedido nos pendentes
+  pendingRequests.set(cacheKey, fetchPromise);
+
+  return fetchPromise;
 };
 
 // ============================================================
@@ -169,97 +193,108 @@ export default function UnifiedNewsFetcher({ terms = [], target = 8, render }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 🔹 Função para atualizar o viés de uma notícia no feed
-  const updateFeedBias = (id, result) => {
+  const prevTermsRef = useRef("");
+
+  const updateFeedBias = useCallback((id, result) => {
     setFeed(prev =>
       prev.map(n => n.id === id ? { ...n, detalhes: result } : n)
     );
-  };
-
-  const carregarNoticias = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      let articles = [];
-      for (const term of terms) {
-        const fetched = await fetchGNews(term, MAX_NEWS_FETCH);
-        articles.push(...fetched);
-      }
-
-      if (!articles.length) {
-        setFeed([]);
-        return;
-      }
-
-      // === DEDUPE ORIGINAL ===
-      const prepared = articles.map((art) => ({
-        original: art,
-        titleNorm: normalizeText(art.title || ""),
-        descNorm: normalizeText(art.description || ""),
-        src: (art.source?.name || "").toLowerCase().trim(),
-      }));
-
-      const kept = [];
-      for (const p of prepared) {
-        let isDup = false;
-        for (let i = 0; i < kept.length; i++) {
-          const k = kept[i];
-
-          const dist = levenshtein(p.titleNorm, k.titleNorm);
-          const maxLen = Math.max(p.titleNorm.length, k.titleNorm.length, 1);
-          const rel = dist / maxLen;
-
-          const descDist = levenshtein(
-            p.descNorm.slice(0, 60),
-            k.descNorm.slice(0, 60)
-          );
-          const descMax = Math.max(
-            p.descNorm.slice(0, 60).length,
-            k.descNorm.slice(0, 60).length,
-            1
-          );
-          const descRel = descDist / descMax;
-
-          const sameSource = p.src === k.src;
-
-          const isTitleClose = rel <= 0.12;
-          const isMaybe = rel <= 0.25 && (descRel <= 0.2 || sameSource);
-
-          if (isTitleClose || isMaybe) {
-            isDup = true;
-            const chosen = preferArticle(p.original, k.original);
-            if (chosen === p.original) kept[i] = p;
-            break;
-          }
-        }
-        if (!isDup) kept.push(p);
-      }
-
-      const processed = kept
-        .slice(0, target)
-        .map((x) => ({
-          ...x.original,
-          id:
-            x.original.url ||
-            `${x.titleNorm}-${Math.random().toString(36).slice(2, 9)}`,
-          image: x.original.image || defaultImage,
-          detalhes: {}, // inicialmente vazio
-        }));
-
-      setFeed(processed);
-    } catch (err) {
-      console.error("Erro ao carregar notícias:", err);
-      setError("Erro ao carregar notícias.");
-    } finally {
-      setLoading(false);
-    }
-  }, [terms, target]);
+  }, []);
 
   useEffect(() => {
-    carregarNoticias();
-  }, [carregarNoticias]);
+    const termsString = JSON.stringify(terms);
+    if (prevTermsRef.current === termsString) return;
+    prevTermsRef.current = termsString;
 
-  // 🔹 Passa updateFeedBias para o render prop
+    let isMounted = true;
+    
+    const carregarNoticias = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        let allArticles = [];
+        
+        const promises = terms.map(term => fetchGNews(term, MAX_NEWS_FETCH));
+        const results = await Promise.all(promises);
+        
+        results.forEach(arr => allArticles.push(...arr));
+
+        if (!isMounted) return;
+
+        if (!allArticles.length) {
+          setFeed([]);
+          return;
+        }
+
+        // Deduplicação lógica
+        const prepared = allArticles.map((art) => ({
+          original: art,
+          titleNorm: normalizeText(art.title || ""),
+          descNorm: normalizeText(art.description || ""),
+          src: (art.source?.name || "").toLowerCase().trim(),
+        }));
+
+        const kept = [];
+        for (const p of prepared) {
+          let isDup = false;
+          for (let i = 0; i < kept.length; i++) {
+            const k = kept[i];
+
+            const dist = levenshtein(p.titleNorm, k.titleNorm);
+            const maxLen = Math.max(p.titleNorm.length, k.titleNorm.length, 1);
+            const rel = dist / maxLen;
+
+            const descDist = levenshtein(
+              p.descNorm.slice(0, 60),
+              k.descNorm.slice(0, 60)
+            );
+            const descMax = Math.max(
+              p.descNorm.slice(0, 60).length,
+              k.descNorm.slice(0, 60).length,
+              1
+            );
+            const descRel = descDist / descMax;
+
+            const sameSource = p.src === k.src;
+
+            const isTitleClose = rel <= 0.15; // Ajustei ligeiramente para ser mais estrito
+            const isMaybe = rel <= 0.25 && (descRel <= 0.2 || sameSource);
+
+            if (isTitleClose || isMaybe) {
+              isDup = true;
+              const chosen = preferArticle(p.original, k.original);
+              if (chosen === p.original) kept[i] = p;
+              break;
+            }
+          }
+          if (!isDup) kept.push(p);
+        }
+
+        const processed = kept
+          .slice(0, target)
+          .map((x) => ({
+            ...x.original,
+            id:
+              x.original.url ||
+              `${x.titleNorm}-${Math.random().toString(36).slice(2, 9)}`,
+            image: x.original.image || defaultImage,
+            detalhes: {}, 
+          }));
+
+        setFeed(processed);
+      } catch (err) {
+        console.error("Erro ao carregar notícias:", err);
+        if (isMounted) setError("Erro ao carregar notícias.");
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    carregarNoticias();
+
+    return () => { isMounted = false; };
+  }, [terms, target]);
+
   return render(feed, loading, error, updateFeedBias);
 }
