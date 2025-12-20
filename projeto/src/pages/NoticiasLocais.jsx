@@ -15,7 +15,7 @@ const MAX_NEWS_LOCAL_DISPLAY = 4;
 
 export default function NoticiasLocais() {
   
-  // ÚNICA CHAMADA: Obtém todas as funções e a lista 'favoritos' do hook
+
   const { toggleFavorito, isFavorito, favoritos } = useFavoritosActions();
 
   // OBTENÇÃO DA LOCALIZAÇÃO

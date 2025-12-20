@@ -14,7 +14,7 @@ export default function VideosNoticias() {
 
   return (
     <div className="page-container">
-      <div style={{ backgroundColor: "#1e3a8a", padding: "25px", marginBottom: 20, borderRadius: "40px" }}>
+      <div style={{ backgroundColor: "#9ca3af", padding: "25px", marginBottom: 20, borderRadius: "40px" }}>
         <h1 style={{ fontSize: 28, marginBottom: 8, color: "white" }}>
           🎥 Semáforo Notícias — Videos
         </h1>

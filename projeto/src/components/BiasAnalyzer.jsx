@@ -25,7 +25,7 @@ async function processQueue() {
   } finally {
     activeRequests--;
     // Intervalo de 1 segundo para evitar o erro 429
-    setTimeout(() => processQueue(), 1000);
+    setTimeout(() => processQueue(), 5000);
   }
 }
 
@@ -138,11 +138,11 @@ export default function BiasAnalyzer({ titulo, description, existingDetails, onA
   );
   const [loading, setLoading] = useState(!detalhes);
 
-  // useRef trava o processo para não repetir no StrictMode
+  
   const processado = useRef(false);
 
   useEffect(() => {
-    let isMounted = true; // 🔹 Evita atualizar estado se o componente morrer
+    let isMounted = true; // Evita atualizar estado se o componente morrer
     if (detalhes || processado.current) return;
 
     async function runAnalysis() {
@@ -161,8 +161,8 @@ export default function BiasAnalyzer({ titulo, description, existingDetails, onA
 
     runAnalysis();
 
-    return () => { isMounted = false; }; // Cleanup
-  }, [titulo, description]); // Dependências limpas: apenas o que define a notícia
+    return () => { isMounted = false; }; 
+  }, [titulo, description]);
 
   if (loading) return <div>A analisar viés...</div>;
 

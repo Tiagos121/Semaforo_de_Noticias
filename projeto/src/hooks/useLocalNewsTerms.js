@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 
-// Fallback inicial seguro
 const INITIAL_QUERY_TERMS = ['notícias Portugal'];
 
 export function useLocalNewsTerms(location) {
@@ -8,43 +7,49 @@ export function useLocalNewsTerms(location) {
   const [cityName, setCityName] = useState("Portugal");
 
   useEffect(() => {
-    // Se ainda não temos localização, mostramos Portugal
+    
     if (!location) {
       setQueryTerms(INITIAL_QUERY_TERMS);
       setCityName("Portugal");
       return;
     }
 
-
-    // Se for "Portugal", é porque falhou o reverso, então assumimos nacional.
+    
     const primaryName = location.city || location.concelho || location.distrito || "Portugal";
     setCityName(primaryName);
 
+    
     if (primaryName === "Portugal") {
       setQueryTerms(['notícias Portugal']);
       return;
     }
 
-    // Construir a Query Local
-    const termosLocais = [
-      location.city,
-      location.concelho,
-      location.distrito
-    ]
-    .filter(Boolean)
-    .filter((value, index, self) => self.indexOf(value) === index) // Remove duplicados
-    .map(local => `"${local}"`); // Aspas para nomes compostos
+    
+    const locaisEspecificos = [location.city, location.concelho]
+      .filter(Boolean)
+      .filter((v, i, a) => a.indexOf(v) === i) 
+      .map(l => `"${l}"`) 
+      .join(" OR ");
 
-    const localQuery = termosLocais.join(" OR ");
+    const distrito = location.distrito ? `"${location.distrito}"` : null;
 
-
+    
     const finalTerms = [];
+
     
-    if (localQuery) {
-      finalTerms.push(localQuery); 
+    if (locaisEspecificos) {
+      finalTerms.push(locaisEspecificos);
     }
+
     
-    finalTerms.push("notícias Portugal"); 
+    if (distrito && distrito !== locaisEspecificos) {
+      finalTerms.push(distrito);
+    }
+
+    
+    if (finalTerms.length === 0) {
+      finalTerms.push('notícias Portugal');
+    }
 
     setQueryTerms(finalTerms);
 

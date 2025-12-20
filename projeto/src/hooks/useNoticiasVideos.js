@@ -11,14 +11,12 @@ export function useNoticiasVideos(manualQuery, limit) {
   const [loading, setLoading] = useState(false);
   const [noticiaOriginal, setNoticiaOriginal] = useState(null);
 
-  // Controlo de execução para evitar duplicados
   const executando = useRef(false);
-  const queryAnterior = useRef("");
+  const queryAnterior = useRef(null); 
 
   useEffect(() => {
     let isMounted = true;
     
-    // Evita rodar se for a mesma query e já estivermos a carregar
     if (executando.current && queryAnterior.current === manualQuery) return;
 
     async function executarFluxoCompleto() {
@@ -26,53 +24,72 @@ export function useNoticiasVideos(manualQuery, limit) {
       
       setLoading(true);
       executando.current = true;
-      queryAnterior.current = manualQuery;
+      queryAnterior.current = manualQuery; 
 
       try {
         let queryFinal = "";
         const isDefault = !manualQuery || manualQuery.trim() === "";
 
         if (isDefault) {
-          const antiCache = `&_cb=${new Date().getTime()}`;
-          const gnewsRes = await fetch(
-            `https://gnews.io/api/v4/top-headlines?category=politics&lang=pt&country=pt&max=5&apikey=${GNEWS_KEY}${antiCache}`
-          );
-          const gnewsData = await gnewsRes.json();
+          //Fluxo Padrão (Baseado em Notícias Reais)
           
           let tituloParaIA = "notícias política Portugal";
-          if (gnewsData.articles?.length > 0) {
-            const noticiaSorteada = gnewsData.articles[Math.floor(Math.random() * gnewsData.articles.length)];
-            if (isMounted) setNoticiaOriginal(noticiaSorteada);
-            tituloParaIA = noticiaSorteada.title;
+          let noticiaSorteada = null;
+
+          try {
+            const antiCache = `&_cb=${new Date().getTime()}`;
+            const gnewsRes = await fetch(
+              `https://gnews.io/api/v4/top-headlines?category=politics&lang=pt&country=pt&max=5&apikey=${GNEWS_KEY}${antiCache}`
+            );
+
+            // Só processamos se o GNews responder OK (evita erros se a quota exceder)
+            if (gnewsRes.ok) {
+              const gnewsData = await gnewsRes.json();
+              if (gnewsData.articles?.length > 0) {
+                noticiaSorteada = gnewsData.articles[Math.floor(Math.random() * gnewsData.articles.length)];
+                if (isMounted) setNoticiaOriginal(noticiaSorteada);
+                tituloParaIA = noticiaSorteada.title;
+              }
+            } else {
+               console.warn("GNews limit ou erro (usando fallback genérico).");
+            }
+          } catch (err) {
+            console.warn("Erro ao buscar GNews (usando fallback).", err);
           }
 
-          let keywords = "política Portugal";
+          // Extração de Keywords via Gemini
+          let keywords = "política Portugal atualidade";
+          
           try {
             const geminiRes = await fetch(GEMINI_URL, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                contents: [{ parts: [{ text: `Extrai apenas 3 palavras-chave simples desta notícia: "${tituloParaIA}"` }] }]
+                contents: [{ parts: [{ text: `Extrai apenas 3 palavras-chave principais e simples (sem pontuação) deste título de notícia: "${tituloParaIA}"` }] }]
               })
             });
 
             if (geminiRes.ok) {
               const geminiData = await geminiRes.json();
               const extractedKeywords = geminiData.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-              if (extractedKeywords) keywords = extractedKeywords;
+              if (extractedKeywords) {
+                keywords = extractedKeywords.replace(/["]/g, ""); 
+              }
             }
           } catch (error) {
-            console.warn("Gemini falhou nos vídeos.", error);
+            console.warn("Gemini falhou nos vídeos (usando keywords padrão).", error);
           }
+          
           
           queryFinal = `${keywords} notícias Portugal`;
           
         } else {
-          queryFinal = `${manualQuery} notícias política`;
+          // --- FLUXO MANUAL (Pesquisa do Utilizador) ---
+          queryFinal = `${manualQuery} notícias política Portugal`;
           if (isMounted) setNoticiaOriginal(null);
         }
 
-        // Busca YouTube
+        // --- YOUTUBE FETCH ---
         const ytUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=${limit}&q=${encodeURIComponent(queryFinal)}&relevanceLanguage=pt&regionCode=PT&key=${YT_KEY}`;
         
         const ytRes = await fetch(ytUrl);
@@ -88,11 +105,11 @@ export function useNoticiasVideos(manualQuery, limit) {
         }
 
       } catch (error) {
-        if (isMounted) console.error("Erro no Hook:", error);
+        if (isMounted) console.error("Erro Geral no Hook de Vídeos:", error);
       } finally {
         if (isMounted) {
           setLoading(false);
-          executando.current = false;
+          executando.current = false; 
         }
       }
     }
@@ -101,7 +118,6 @@ export function useNoticiasVideos(manualQuery, limit) {
 
     return () => { 
       isMounted = false; 
-      executando.current = false;
     };
   }, [manualQuery, limit]);
 
